@@ -1,0 +1,3747 @@
+<!DOCTYPE html>
+<!-- saved from url=(0055)http://192.168.8.124:8000/autozapchasti_mobile_fix.html -->
+<html lang="ru"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>АвтоЗапчасти — Учёт и касса</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --bg2: #161b26;
+      --bg3: #1c2333;
+      --card: #1a2030;
+      --hover: #252d3d;
+      --border: #2a3548;
+      --text: #e8edf5;
+      --muted: #8b9cb3;
+      --dim: #5c6b82;
+      --accent: #3b82f6;
+      --accent-h: #2563eb;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --err: #ef4444;
+      --kaspi: #f02749;
+      --sidebar: 240px;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+    button { font-family: inherit; cursor: pointer; border: none; }
+    input, select, textarea { font-family: inherit; }
+
+    /* Login */
+    #login-screen {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #0f1117, #1a1f2e, #0f1117); padding: 20px;
+    }
+    .login-box {
+      width: 100%; max-width: 400px; background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 16px; padding: 40px; box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    }
+    .login-logo { text-align: center; margin-bottom: 28px; }
+    .login-logo .icon {
+      width: 64px; height: 64px; margin: 0 auto 12px; background: rgba(59,130,246,.15);
+      border-radius: 14px; display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+    }
+    .login-logo h1 { font-size: 24px; }
+    .login-logo p { color: var(--muted); font-size: 14px; margin-top: 6px; }
+    .login-hint {
+      margin-top: 20px; padding: 12px; background: var(--bg3); border-radius: 8px;
+      font-size: 12px; color: var(--dim); line-height: 1.7;
+    }
+
+    /* Layout */
+    #app { display: none; min-height: 100vh; }
+    #app.active { display: flex; }
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar);
+      background: var(--bg2); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; z-index: 100;
+    }
+    .sidebar-brand { padding: 22px 18px; border-bottom: 1px solid var(--border); }
+    .sidebar-brand h2 { font-size: 16px; }
+    .sidebar-brand span { font-size: 12px; color: var(--dim); }
+    .nav { flex: 1; padding: 10px 8px; overflow-y: auto; }
+    .nav-btn {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      padding: 11px 14px; border-radius: 8px; margin-bottom: 4px;
+      background: none; color: var(--muted); font-size: 14px; font-weight: 500;
+      text-align: left; transition: .2s;
+    }
+    .nav-btn:hover { background: var(--hover); color: var(--text); }
+    .nav-btn.active { background: rgba(59,130,246,.15); color: var(--accent); }
+    .sidebar-user { padding: 16px 18px; border-top: 1px solid var(--border); }
+    .sidebar-user .name { font-weight: 600; font-size: 14px; }
+    .sidebar-user .role { font-size: 12px; color: var(--dim); margin-bottom: 10px; }
+    .main {
+      margin-left: var(--sidebar); flex: 1; min-height: 100vh;
+      display: flex; flex-direction: column;
+    }
+    .content { flex: 1; padding: 24px; overflow-y: auto; }
+    .page { display: none; }
+    .page.active { display: block; animation: fadeIn .25s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    .page-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px; margin-bottom: 24px;
+    }
+    .page-header h1 { font-size: 26px; font-weight: 700; }
+    .page-header p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+    /* Cards & stats */
+    .cards {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px; margin-bottom: 24px;
+    }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+    }
+    .card:hover { border-color: #354158; }
+    .card-label { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+    .card-value { font-size: 28px; font-weight: 700; }
+    .card.ok .card-value { color: var(--ok); }
+    .card.warn .card-value { color: var(--warn); }
+    .card.err .card-value { color: var(--err); }
+    .card.kaspi .card-value { color: var(--kaspi); }
+    .panel {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; margin-bottom: 20px;
+    }
+    .panel-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px 18px; border-radius: 8px; font-size: 14px; font-weight: 500;
+      transition: .2s; white-space: nowrap;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-h); }
+    .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--hover); }
+    .btn-danger { background: rgba(239,68,68,.15); color: var(--err); border: 1px solid rgba(239,68,68,.3); }
+    .btn-danger:hover { background: var(--err); color: #fff; }
+    .btn-success { background: rgba(34,197,94,.15); color: var(--ok); border: 1px solid rgba(34,197,94,.3); }
+    .btn-success:hover { background: var(--ok); color: #fff; }
+    .btn-lg { padding: 14px 24px; font-size: 16px; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+    /* Forms */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 700px) { .form-row { grid-template-columns: 1fr; } }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+    .field input, .field select, .field textarea {
+      width: 100%; padding: 11px 14px; background: var(--bg3);
+      border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    }
+    .field textarea { resize: vertical; min-height: 80px; }
+
+    /* Search */
+    .search-box {
+      display: flex; align-items: center; gap: 10px; background: var(--bg3);
+      border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px;
+      min-width: 260px; flex: 1; max-width: 400px;
+    }
+    .search-box input { flex: 1; background: none; border: none; color: var(--text); font-size: 14px; outline: none; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 20px; }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 15px; }
+    thead { background: var(--bg3); }
+    th {
+      text-align: left; padding: 14px 16px; font-size: 12px; font-weight: 600;
+      color: var(--muted); text-transform: uppercase; letter-spacing: .5px;
+      border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    td { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+    tbody tr:hover { background: var(--hover); }
+    tbody tr:last-child td { border-bottom: none; }
+    .low-stock { color: var(--warn); font-weight: 600; }
+    .code-tag {
+      font-family: Consolas, 'Courier New', monospace; font-size: 13px;
+      color: var(--accent); background: rgba(59,130,246,.12);
+      padding: 3px 8px; border-radius: 4px; font-weight: 600;
+    }
+    .sale-search-wrap { position: relative; }
+    .sale-results {
+      position: absolute; left: 0; right: 0; top: 100%; margin-top: 4px;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+      max-height: 240px; overflow-y: auto; z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    }
+    .sale-result-item {
+      padding: 12px 14px; cursor: pointer; border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    .sale-result-item:hover { background: var(--hover); }
+    .sale-result-item:last-child { border-bottom: none; }
+    .sale-selected {
+      padding: 12px 14px; background: var(--bg3); border: 1px solid var(--accent);
+      border-radius: 8px; margin-bottom: 16px; font-size: 14px;
+    }
+    .sale-selected .name { font-weight: 600; margin-top: 4px; }
+    .scan-hint {
+      font-size: 13px; color: var(--muted); margin-bottom: 12px; padding: 10px 14px;
+      background: var(--bg3); border-radius: 8px; border: 1px dashed var(--border);
+    }
+    .scan-hint strong { color: var(--accent); }
+    .barcode-preview {
+      text-align: center; padding: 16px; background: #fff; border-radius: 8px;
+      margin-top: 8px; overflow-x: auto;
+    }
+    .barcode-preview svg { max-width: 100%; height: auto; }
+    .barcode-num { font-family: Consolas, monospace; font-size: 15px; margin-top: 8px; color: #111; letter-spacing: 2px; }
+    .barcode-tag { font-family: Consolas, monospace; font-size: 12px; color: var(--muted); }
+
+    /* Badge */
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 12px; font-weight: 500;
+    }
+    .badge-ok { background: rgba(34,197,94,.15); color: var(--ok); }
+    .badge-warn { background: rgba(245,158,11,.15); color: var(--warn); }
+    .badge-kaspi { background: rgba(240,39,73,.15); color: var(--kaspi); }
+    .badge-info { background: rgba(59,130,246,.15); color: var(--accent); }
+    .badge-danger { background: rgba(239,68,68,.15); color: var(--err); }
+
+    /* Payment buttons */
+    .pay-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .pay-btn {
+      flex: 1; min-width: 100px; padding: 14px; border: 2px solid var(--border);
+      border-radius: 8px; background: var(--bg3); color: var(--muted);
+      font-size: 14px; font-weight: 500; transition: .2s;
+    }
+    .pay-btn.active { border-color: var(--accent); background: rgba(59,130,246,.15); color: var(--accent); }
+    .pay-btn.kaspi.active { border-color: var(--kaspi); background: rgba(240,39,73,.15); color: var(--kaspi); }
+
+    /* Modal */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.65);
+      display: none; align-items: center; justify-content: center;
+      z-index: 1000; padding: 20px;
+    }
+    .overlay.show { display: flex; }
+    .modal {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+      width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 8px 40px rgba(0,0,0,.5); animation: slideUp .25s ease;
+    }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } }
+    .modal-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 22px; border-bottom: 1px solid var(--border);
+    }
+    .modal-head h3 { font-size: 18px; }
+    .modal-close { background: none; color: var(--muted); font-size: 22px; padding: 4px 8px; border-radius: 6px; }
+    .modal-close:hover { background: var(--hover); color: var(--text); }
+    .modal-body { padding: 22px; }
+    .modal-foot {
+      display: flex; gap: 10px; justify-content: flex-end;
+      padding: 14px 22px; border-top: 1px solid var(--border);
+    }
+
+    /* Notifications */
+    #toasts {
+      position: fixed; top: 20px; right: 20px; z-index: 2000;
+      display: flex; flex-direction: column; gap: 10px; max-width: 360px;
+    }
+    .toast {
+      padding: 14px 18px; background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 8px; font-size: 14px; box-shadow: 0 4px 20px rgba(0,0,0,.4);
+      animation: slideUp .3s ease; border-left: 3px solid var(--accent);
+    }
+    .toast.ok { border-left-color: var(--ok); }
+    .toast.err { border-left-color: var(--err); }
+    .toast.warn { border-left-color: var(--warn); }
+
+    .hidden { display: none !important; }
+    .admin-only.hidden-role { display: none !important; }
+    .cashier-only.hidden-role { display: none !important; }
+    .empty { text-align: center; padding: 40px; color: var(--dim); }
+    .profit-pos { color: var(--ok); }
+    .profit-neg { color: var(--err); }
+    .actions { display: flex; gap: 6px; }
+    .icon-btn {
+      padding: 8px 10px; border-radius: 6px; background: var(--bg3);
+      color: var(--muted); font-size: 14px;
+    }
+    .icon-btn:hover { background: var(--hover); color: var(--text); }
+    .icon-btn.del:hover { background: rgba(239,68,68,.2); color: var(--err); }
+
+    @media (max-width: 900px) {
+      .sidebar { width: 70px; }
+      .sidebar .nav-btn span, .sidebar-brand h2, .sidebar-brand span,
+      .sidebar-user .name, .sidebar-user .role, #btn-logout span { display: none; }
+      .sidebar-brand { text-align: center; padding: 16px 8px; }
+      .main { margin-left: 70px; }
+      .nav-btn { justify-content: center; padding: 12px; }
+    }
+
+    /* Mobile styles */
+    .mobile-header {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 90;
+    }
+    .mobile-header h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .menu-btn {
+      background: none;
+      color: var(--text);
+      font-size: 24px;
+      padding: 4px 12px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .menu-btn:hover {
+      background: var(--hover);
+    }
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 95;
+    }
+    .sales-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 20px;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 768px) {
+      .mobile-header {
+        display: flex;
+      }
+      .sidebar-overlay.active {
+        display: block;
+      }
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 100;
+        width: 250px !important;
+      }
+      .sidebar.active {
+        transform: translateX(0);
+      }
+      /* Restore hidden text elements in sidebar for drawer view */
+      .sidebar .nav-btn span, .sidebar-brand h2, .sidebar-brand span,
+      .sidebar-user .name, .sidebar-user .role, #btn-logout span {
+        display: inline !important;
+      }
+      .sidebar-brand h2 {
+        display: block !important;
+      }
+      .sidebar-brand {
+        text-align: left !important;
+        padding: 22px 18px !important;
+      }
+      .nav-btn {
+        justify-content: flex-start !important;
+        padding: 11px 14px !important;
+      }
+      .main {
+        margin-left: 0 !important;
+        padding-top: 56px !important;
+      }
+      .content {
+        padding: 16px;
+      }
+      /* iOS Safari: предотвращаем зум при фокусе (если шрифт < 16px) */
+      input, select, textarea {
+        font-size: 16px !important;
+      }
+      /* Чтобы уведомления не перекрывали мобильный хедер */
+      #toasts {
+        top: 70px;
+        left: 10px;
+        right: 10px;
+        max-width: none;
+      }
+      .sales-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      /* Выпадающий поиск в продаже: выше и скроллится на телефоне */
+      .sale-results {
+        max-height: 45vh;
+      }
+      /* Ряды с инпутами/кнопкой: перенос строк на телефоне */
+      .sale-customer-row,
+      .cash-row {
+        flex-wrap: wrap !important;
+        align-items: stretch !important;
+      }
+      .sale-customer-row > input {
+        flex: 1 1 100%;
+      }
+      .sale-customer-row > button,
+      .cash-row > div {
+        flex: 1 1 100%;
+      }
+      .sale-customer-row > button {
+        width: 100%;
+      }
+      /* Смешанная оплата: 2 колонки -> 1 колонка на телефоне */
+      #mixed-payment-wrap .mixed-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .page-header h1 {
+        font-size: 22px;
+      }
+    }
+    #auth-screen {
+      min-height: 100vh; display: none; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #0f1117, #1a1f2e, #0f1117); padding: 20px;
+    }
+    .auth-panel { display: none; width: 100%; max-width: 400px; }
+    .auth-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .auth-tabs button { flex: 1; }
+  </style>
+</head>
+<body>
+
+<!-- УВЕДОМЛЕНИЯ -->
+<div id="toasts"></div>
+
+<!-- SUPABASE AUTH -->
+<div id="auth-screen">
+  <div class="login-box" style="max-width:420px">
+    <div class="login-logo">
+      <div class="icon">🔧</div>
+      <h1>АвтоЗапчасти</h1>
+      <p>Облачный учёт и касса</p>
+    </div>
+    <div id="auth-config-warn" class="login-hint" style="display:none;border:1px solid var(--err);color:var(--err)">
+      Укажите SUPABASE_URL и SUPABASE_ANON_KEY в файле <strong>js/config.js</strong>
+    </div>
+    <div id="auth-file-warn" class="login-hint" style="display:none;border:1px solid var(--warn);margin-bottom:16px">
+      <strong>Так открывать нельзя</strong> (двойной щелчок по файлу).<br>
+      Нужен сайт в интернете: один раз выложите папку на <strong>GitHub Pages</strong> или <strong>Netlify</strong>.<br>
+      Инструкция: файл <code>docs/КАК_ВЫЛОЖИТЬ_САЙТ.md</code> или <code>ОТКРЫТЬ_САЙТ.txt</code> на рабочем столе в папке 095.<br>
+      <span style="color:var(--dim)">Для проверки на ПК: <a href="http://127.0.0.1:5500" style="color:var(--accent)">http://127.0.0.1:5500</a> (сначала запустите python -m http.server 5500)</span>
+    </div>
+
+    <div id="auth-site-gate" class="auth-panel" style="display:none">
+      <p style="font-size:14px;color:var(--muted);margin-bottom:14px">Доступ только для сотрудников. Введите код, который выдал администратор.</p>
+      <div class="field">
+        <label>Код доступа</label>
+        <input type="password" id="site-access-code-input" placeholder="Код" autocomplete="off">
+      </div>
+      <button type="button" class="btn btn-primary btn-lg" style="width:100%" id="btn-site-access-ok">Продолжить</button>
+    </div>
+
+    <div id="auth-login" class="auth-panel" style="display:block">
+      <form id="auth-login-form">
+        <div class="field">
+          <label>Логин (электронная почта)</label>
+          <input type="email" id="auth-email" autocomplete="username" required placeholder="admin@example.com">
+        </div>
+        <div class="field">
+          <label>Пароль</label>
+          <input type="password" id="auth-password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:8px">Войти</button>
+      </form>
+      <p class="login-hint" style="margin-top:12px;font-size:12px">
+        Доступ только для сотрудников.<br>
+        Новых кассиров добавляет администратор: «Кассиры» → «Пригласить кассира».<br>
+        Для получения доступа обратитесь к администратору магазина.
+      </p>
+    </div>
+
+    <div id="auth-register" class="auth-panel" style="display:none">
+      <!-- Registration disabled: only admin can invite via cashier invite -->
+    </div>
+
+    <div id="auth-stores" class="auth-panel">
+      <p style="font-size:14px;color:var(--muted);margin-bottom:12px">Выберите магазин для работы:</p>
+      <div id="store-list"></div>
+      <button type="button" class="btn btn-secondary btn-sm" style="width:100%;margin-top:8px" id="btn-auth-logout">Выйти из аккаунта</button>
+    </div>
+  </div>
+</div>
+
+<!-- ЧЕК / КОРЗИНА (просмотр) -->
+<div class="overlay" id="modal-receipt">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-head">
+      <h3 id="receipt-title">Чек</h3>
+      <button class="modal-close" onclick="closeModal(&#39;modal-receipt&#39;)">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="receipt-meta" style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:12px"></div>
+      <div class="table-wrap" id="receipt-items"></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:12px;font-weight:700">
+        Итого: <span id="receipt-total" style="margin-left:8px"></span>
+      </div>
+    </div>
+    <div class="modal-foot" style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+      <button class="btn btn-danger btn-sm" id="btn-receipt-return" onclick="openReturnModalFromReceipt()">🔄 Оформить возврат</button>
+      <button class="btn btn-secondary" onclick="closeModal(&#39;modal-receipt&#39;)">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛКА КЛИЕНТ -->
+<div class="overlay" id="modal-customer">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head">
+      <h3 id="modal-customer-title">Новый клиент</h3>
+      <button class="modal-close" onclick="closeModal(&#39;modal-customer&#39;)">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="customer-edit-id">
+      <div class="field">
+        <label>Телефон / ID *</label>
+        <input type="text" id="customer-phone" placeholder="77001234567">
+      </div>
+      <div class="field">
+        <label>Имя *</label>
+        <input type="text" id="customer-name" placeholder="Иван">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal(&#39;modal-customer&#39;)">Отмена</button>
+      <button class="btn btn-primary" onclick="saveCustomer()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEGACY LOGIN (скрыт, используется Supabase auth-screen) -->
+<div id="login-screen" style="display:none">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon">🔧</div>
+      <h1>АвтоЗапчасти</h1>
+      <p>Система учёта и кассы</p>
+    </div>
+    <form id="login-form">
+      <div class="field">
+        <label>Магазин</label>
+        <select id="login-store" class="form-select" style="width:100%" required=""><option value="default">Основной магазин</option></select>
+      </div>
+      <div class="field">
+        <label>Логин</label>
+        <input type="text" id="login-user" placeholder="Введите логин" autocomplete="username" required="">
+      </div>
+      <div class="field">
+        <label>Пароль</label>
+        <input type="password" id="login-pass" placeholder="Введите пароль" autocomplete="current-password" required="">
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:8px">Войти</button>
+    </form>
+    <div class="login-hint">
+      <strong>Демо-аккаунты:</strong><br>
+      Админ: admin / admin123<br>
+      Кассир: cashier / cashier123
+    </div>
+    <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px;font-weight:600">⚙️ Управление магазинами</div>
+      <button type="button" class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:8px" onclick="document.getElementById(&#39;login-new-store-form&#39;).classList.toggle(&#39;hidden&#39;)">➕ Создать новый магазин</button>
+      <div id="login-new-store-form" class="hidden" style="background:var(--bg3);padding:14px;border-radius:8px;margin-top:8px">
+        <div class="field" style="margin-bottom:10px">
+          <label style="font-size:12px">Название магазина *</label>
+          <input type="text" id="ls-store-name" placeholder="Например: Магазин №2" style="width:100%;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div>
+            <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px">Логин админа *</label>
+            <input type="text" id="ls-admin-login" placeholder="admin2" autocomplete="off" style="width:100%;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px">
+          </div>
+          <div>
+            <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px">Имя админа *</label>
+            <input type="text" id="ls-admin-name" placeholder="Администратор" style="width:100%;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div>
+            <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px">Пароль *</label>
+            <input type="password" id="ls-admin-pass" placeholder="Мин. 4 символа" style="width:100%;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px">
+          </div>
+          <div>
+            <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px">Повторите пароль *</label>
+            <input type="password" id="ls-admin-pass2" placeholder="Повторите" style="width:100%;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px">
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary" style="width:100%" onclick="createStoreFromLogin()">➕ Создать магазин</button>
+      </div>
+      <div id="login-delete-store-wrap" style="margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ПРИЛОЖЕНИЕ -->
+<div id="app">
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h2>АвтоЗапчасти</h2>
+      <span>Учёт и касса</span>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-page="dashboard"><span>📊</span><span>Главная</span></button>
+      <button class="nav-btn" data-page="products"><span>📦</span><span>Товары</span></button>
+      <button class="nav-btn" data-page="sales"><span>🛒</span><span>Продажа</span></button>
+      <button class="nav-btn admin-only" data-page="expenses"><span>💸</span><span>Расходы</span></button>
+      <button class="nav-btn admin-only" data-page="statistics"><span>📈</span><span>Статистика</span></button>
+      <button class="nav-btn admin-only" data-page="cards"><span>💳</span><span>Скидочные карты</span></button>
+      <button class="nav-btn cashier-only" data-page="myshift"><span>🕐</span><span>Моя смена</span></button>
+      <button class="nav-btn admin-only" data-page="cashiers"><span>👤</span><span>Кассиры и смены</span></button>
+      <button class="nav-btn admin-only" data-page="audits"><span>⚙️</span><span>Ревизия и списания</span></button>
+    </nav>
+    <div class="sidebar-user">
+      <div class="name" id="user-name">—</div>
+      <div class="role" id="user-role">—</div>
+      <button class="btn btn-secondary btn-sm" id="btn-logout" style="width:100%"><span>🚪</span><span> Выйти</span></button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <!-- MOBILE HEADER -->
+    <header class="mobile-header">
+      <button class="menu-btn" id="btn-menu-toggle">☰</button>
+      <h2 id="mobile-store-title">Основной магазин</h2>
+      <div style="width: 32px;"></div>
+    </header>
+    <div class="content">
+
+      <!-- ГЛАВНАЯ -->
+      <section class="page active" id="page-dashboard">
+        <div class="page-header">
+          <div>
+            <h1>Главная</h1>
+            <p id="dash-date"></p>
+          </div>
+          <button class="btn btn-primary btn-lg" onclick="goPage(&#39;sales&#39;)">🛒 Новая продажа</button>
+        </div>
+        <div class="cards" id="dash-cards"></div>
+        <div class="panel">
+          <div class="panel-title">⚠️ Мало на складе</div>
+          <div id="dash-lowstock"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Последние продажи</div>
+          <div id="dash-recent"></div>
+        </div>
+      </section>
+
+      <!-- ТОВАРЫ -->
+      <section class="page" id="page-products">
+        <div class="page-header">
+          <div>
+            <h1>Товары</h1>
+            <p id="products-count">Склад автозапчастей</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-secondary admin-only" onclick="exportProductsToExcel()">📤 Экспорт</button>
+            <button class="btn btn-secondary admin-only" onclick="document.getElementById('import-csv-input').click()">📥 Импорт CSV</button>
+            <input type="file" id="import-csv-input" accept=".csv" style="display:none" onchange="importProductsFromCSV(event)">
+            <button class="btn btn-secondary admin-only" onclick="openCategoriesModal()">Категории</button>
+            <button class="btn btn-primary admin-only" id="btn-add-product" onclick="openProductModal()">+ Добавить товар</button>
+          </div>
+        </div>
+        <div class="toolbar" style="flex-wrap:wrap">
+          <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="product-search" placeholder="Поиск: код, штрих-код, название..." oninput="renderProducts()" style="flex:1;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="startCameraScanner('product-search')" style="margin-left: 8px;">📷 Камера</button>
+          </div>
+          <select id="filter-category" class="form-input" style="min-width:180px" onchange="renderProducts()">
+            <option value="">Все категории</option>
+          </select>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="number" id="filter-price-min" class="form-input" style="width:110px" placeholder="Цена от" min="0" oninput="renderProducts()">
+            <input type="number" id="filter-price-max" class="form-input" style="width:110px" placeholder="Цена до" min="0" oninput="renderProducts()">
+          </div>
+          <select id="filter-sort" class="form-input" style="min-width:190px" onchange="renderProducts()">
+            <option value="name_asc">Сортировка: Название (А-Я)</option>
+            <option value="price_asc">Цена: по возрастанию</option>
+            <option value="price_desc">Цена: по убыванию</option>
+            <option value="qty_asc">Остаток: меньше</option>
+            <option value="qty_desc">Остаток: больше</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);cursor:pointer">
+            <input type="checkbox" id="filter-low" onchange="renderProducts()"> Только мало на складе
+          </label>
+        </div>
+        <div class="panel" style="padding:0">
+          <div class="table-wrap" id="products-table"></div>
+        </div>
+      </section>
+
+      <!-- ПРОДАЖА -->
+      <section class="page" id="page-sales">
+        <div class="page-header">
+          <div>
+            <h1>Продажа</h1>
+            <p>Оформление продажи товара</p>
+          </div>
+        </div>
+        <div id="sale-shift-banner" class="panel hidden" style="margin-bottom:16px;border-color:var(--accent)"></div>
+        <div class="sales-grid">
+          <div class="panel">
+            <div class="scan-hint">
+              <strong>📷 Сканер штрих-кода:</strong> отсканируйте товар (поиск работает автоматически).
+            </div>
+            <div class="field sale-search-wrap" style="display:flex;gap:8px;">
+              <input type="text" id="sale-search" placeholder="Сканируйте штрих-код или введите код товара" autocomplete="off" oninput="onSaleSearch()" onkeydown="onSaleSearchKey(event)" onfocus="this.select()" style="flex:1;">
+              <button type="button" class="btn btn-secondary" onclick="startCameraScanner('sale-search')">📷 Камера</button>
+              <div id="sale-results" class="sale-results hidden"></div>
+            </div>
+
+            <!-- Cart Table -->
+            <div style="margin-bottom: 16px;">
+              <div style="font-weight:600;margin-bottom:8px">Корзина:</div>
+              <div class="table-wrap">
+                <table id="sale-cart-table">
+                  <thead><tr><th>Товар</th><th style="width:100px;text-align:center">Кол-во</th><th style="text-align:right">Сумма</th><th style="width:40px"></th></tr></thead>
+                  <tbody id="sale-cart-body"><tr><td colspan="4" class="empty">Корзина пуста</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Customer logic -->
+            <div class="field" style="background:var(--bg3);padding:12px;border-radius:8px">
+              <label>Клиент (телефон или ID)</label>
+              <div class="sale-customer-row" style="display:flex;gap:8px;margin-bottom:8px">
+                <input type="text" id="sale-customer-search" placeholder="Номер телефона" style="flex:1">
+                <input type="text" id="sale-customer-name" placeholder="Имя (для новых)" style="flex:1;display:none">
+                <button type="button" class="btn btn-secondary" onclick="findCustomer()">Поиск</button>
+              </div>
+              <div id="sale-customer-info" style="font-size:13px;display:none;margin-bottom:8px"></div>
+              <div id="sale-bonus-wrap" style="display:none;align-items:center;gap:8px;font-size:13px">
+                Списать бонусы:
+                <input type="number" id="sale-bonus-spend" class="form-input" style="width:80px;padding:4px" min="0" value="0" oninput="updateSaleTotal()">
+                <span id="sale-bonus-max" style="color:var(--muted)"></span>
+              </div>
+            </div>
+
+            <div class="field">
+              <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:14px;margin-bottom:4px">
+                <span>Сумма:</span> <span id="sale-subtotal">0 ₸</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;color:var(--ok);font-size:14px;margin-bottom:4px;display:none" id="sale-discount-row">
+                <span>Скидка уровня:</span> <span id="sale-discount">-0 ₸</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;color:var(--ok);font-size:14px;margin-bottom:8px;display:none" id="sale-bonus-row">
+                <span>Оплата бонусами:</span> <span id="sale-bonus-used">-0 ₸</span>
+              </div>
+              <label>Итого к оплате</label>
+              <input type="text" id="sale-total" readonly="" style="font-size:20px;font-weight:700">
+            </div>
+            
+            <label style="font-size:13px;color:var(--muted);margin-bottom:8px;display:block">Способ оплаты</label>
+            <div class="pay-btns">
+              <button type="button" class="pay-btn active" data-pay="cash" onclick="setPayment(this)">💵 Наличные</button>
+              <button type="button" class="pay-btn kaspi" data-pay="kaspi" onclick="setPayment(this)">📱 Kaspi</button>
+              <button type="button" class="pay-btn" data-pay="transfer" onclick="setPayment(this)">🏦 Перевод</button>
+              <button type="button" class="pay-btn" data-pay="mixed" onclick="setPayment(this)">🔀 Смешанная</button>
+            </div>
+            <!-- Наличные: сумма от клиента и сдача -->
+            <div id="cash-change-wrap" style="margin-bottom:14px">
+              <div class="cash-row" style="display:flex;gap:8px;align-items:flex-end">
+                <div style="flex:1">
+                  <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:4px">Сумма от клиента (₸)</label>
+                  <input type="number" id="cash-given" min="0" placeholder="Например: 10000" style="width:100%;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:16px;font-weight:600" oninput="calcChange()">
+                </div>
+                <div style="flex:1">
+                  <label style="font-size:13px;color:var(--ok);display:block;margin-bottom:4px">Сдача</label>
+                  <input type="text" id="cash-change" readonly="" style="width:100%;padding:10px 14px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:8px;color:var(--ok);font-size:16px;font-weight:700">
+                </div>
+              </div>
+            </div>
+            <!-- Смешанная оплата -->
+            <div id="mixed-payment-wrap" class="hidden" style="background:var(--bg3);padding:12px;border-radius:8px;margin-bottom:14px">
+              <div style="font-size:13px;color:var(--muted);margin-bottom:10px;font-weight:600">Разделение оплаты</div>
+              <div class="mixed-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                <div>
+                  <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px">💵 Наличные (₸)</label>
+                  <input type="number" id="mixed-cash" min="0" value="0" placeholder="0" style="width:100%;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px" oninput="calcMixedRemainder(true)">
+                </div>
+                <div>
+                  <label style="font-size:12px;color:var(--kaspi);display:block;margin-bottom:4px">📱 Kaspi / Перевод (₸)</label>
+                  <input type="number" id="mixed-kaspi" min="0" value="0" placeholder="0" style="width:100%;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px" oninput="calcMixedRemainder(false)">
+                </div>
+              </div>
+              <div class="mixed-grid" id="mixed-change-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                <div>
+                  <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px">💵 Получено наличных (₸)</label>
+                  <input type="number" id="mixed-cash-given" min="0" placeholder="0" style="width:100%;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px" oninput="calcMixedRemainder()">
+                </div>
+                <div>
+                  <label style="font-size:12px;color:var(--ok);display:block;margin-bottom:4px">Сдача с наличных</label>
+                  <input type="text" id="mixed-cash-change" readonly style="width:100%;padding:8px 12px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:6px;color:var(--ok);font-size:14px;font-weight:700">
+                </div>
+              </div>
+              <div id="mixed-remainder" style="font-size:13px;color:var(--muted);text-align:center"></div>
+            </div>
+            <button class="btn btn-success btn-lg" style="width:100%" id="btn-complete-sale" onclick="completeSale()" disabled="">✓ Подтвердить продажу</button>
+          </div>
+          <div class="panel">
+            <div class="panel-title">История продаж сегодня</div>
+            <div id="sales-today-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- РАСХОДЫ -->
+      <section class="page" id="page-expenses">
+        <div class="page-header">
+          <div>
+            <h1>Расходы</h1>
+            <p id="expenses-total-label">Учёт расходов магазина</p>
+          </div>
+          <button class="btn btn-primary" onclick="openExpenseModal()">+ Добавить расход</button>
+        </div>
+        <div class="panel" style="padding:0">
+          <div class="table-wrap" id="expenses-table"></div>
+        </div>
+      </section>
+
+      <!-- СКИДОЧНЫЕ КАРТЫ -->
+      <section class="page" id="page-cards">
+        <div class="page-header">
+          <div>
+            <h1>Скидочные карты</h1>
+            <p>Клиенты, уровни, бонусы и история покупок</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-secondary" onclick="exportCustomersToExcel()">📥 Excel</button>
+            <button class="btn btn-primary" onclick="openCustomerModal()">+ Новый клиент</button>
+          </div>
+        </div>
+        <div class="toolbar" style="flex-wrap:wrap">
+          <div class="search-box" style="min-width:260px">
+            <span>🔍</span>
+            <input type="text" id="customer-search" placeholder="Поиск: телефон, имя..." oninput="renderCustomers()">
+          </div>
+          <select id="customer-tier" class="form-input" style="min-width:160px" onchange="renderCustomers()">
+            <option value="">Все уровни</option>
+            <option value="Bronze">Bronze</option>
+            <option value="Silver">Silver</option>
+            <option value="Gold">Gold</option>
+            <option value="VIP">VIP</option>
+          </select>
+        </div>
+        <div class="panel" style="padding:0">
+          <div class="table-wrap" id="customers-table"></div>
+        </div>
+      </section>
+
+      <!-- МОЯ СМЕНА (кассир) -->
+      <section class="page" id="page-myshift">
+        <div class="page-header">
+          <div>
+            <h1>Моя смена</h1>
+            <p id="myshift-subtitle">Открытие и закрытие вашей рабочей смены</p>
+          </div>
+        </div>
+        <div class="panel" id="myshift-controls"></div>
+        <div class="panel">
+          <div class="panel-title">Текущая смена</div>
+          <div id="myshift-open-list"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Закрытые смены</div>
+          <p style="font-size:13px;color:var(--muted);margin:-8px 0 12px">Закрытую смену нельзя открыть снова. Можно скачать отчёт Excel.</p>
+          <div id="myshift-closed-list"></div>
+        </div>
+      </section>
+
+      <!-- КАССИРЫ И СМЕНЫ -->
+      <section class="page" id="page-cashiers">
+        <div class="page-header">
+          <div>
+            <h1>Кассиры и смены</h1>
+            <p>Учётные записи и рабочие смены</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="openInviteCashierModal()">✉ Пригласить кассира</button>
+            <button class="btn btn-secondary" onclick="openCashierModal()">✏️ Редактировать</button>
+          </div>
+        </div>
+        <div class="tabs" id="cashiers-tabs">
+          <button class="tab active" data-ctab="accounts" onclick="switchCashiersTab(&#39;accounts&#39;)">Кассиры</button>
+          <button class="tab" data-ctab="shifts" onclick="switchCashiersTab(&#39;shifts&#39;)">Смены</button>
+          <button class="tab" data-ctab="profile" onclick="switchCashiersTab(&#39;profile&#39;)">Мой аккаунт</button>
+          <button class="tab admin-only" data-ctab="backup" onclick="switchCashiersTab(&#39;backup&#39;)">Резервная копия</button>
+        </div>
+        <div id="ctab-accounts">
+          <div class="panel" style="padding:0">
+            <div class="table-wrap" id="cashiers-table"></div>
+          </div>
+        </div>
+        <div id="ctab-profile" class="hidden">
+          <div class="panel" style="max-width:520px">
+            <div class="panel-title">Данные администратора</div>
+            <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Измените свой логин, имя и пароль для входа в систему.</p>
+            <div class="field">
+              <label>Логин (электронная почта)</label>
+              <input type="email" id="admin-username" placeholder="admin@example.com" autocomplete="username" readonly style="opacity:0.7">
+            </div>
+            <div class="field">
+              <label>Имя (ФИО) *</label>
+              <input type="text" id="admin-name" placeholder="Администратор">
+            </div>
+            <div class="field">
+              <label>Новый пароль <span style="color:var(--dim)">(пусто = не менять)</span></label>
+              <input type="password" id="admin-password" placeholder="Новый пароль" autocomplete="new-password">
+            </div>
+            <div class="field">
+              <label>Повторите пароль</label>
+              <input type="password" id="admin-password2" placeholder="Повторите пароль">
+            </div>
+            <button class="btn btn-primary" onclick="saveAdminProfile()">💾 Сохранить мой профиль</button>
+          </div>
+        </div>
+        <div id="ctab-backup" class="hidden admin-only">
+          <div class="panel" style="max-width:560px">
+            <div class="panel-title">Резервное копирование</div>
+            <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+              Сохраните все данные магазина в файл JSON. Храните копии на флешке или в облаке.
+              Восстановление заменяет текущие данные магазина в облаке.
+            </p>
+            <button type="button" class="btn btn-primary" style="width:100%;margin-bottom:12px" onclick="exportStoreBackup()">📥 Скачать резервную копию</button>
+            <div class="field">
+              <label>Восстановить из файла</label>
+              <input type="file" id="backup-import-file" accept=".json,application/json">
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-bottom:12px">
+              <input type="checkbox" id="backup-replace-all"> Заменить все данные магазина (осторожно)
+            </label>
+            <button type="button" class="btn btn-danger" style="width:100%" onclick="importStoreBackup()">📤 Восстановить из копии</button>
+          </div>
+        </div>
+        <div id="ctab-shifts" class="hidden">
+          <div class="panel">
+            <div class="panel-title">Открыть смену</div>
+            <div class="toolbar">
+              <div class="field" style="margin:0;flex:1;max-width:320px">
+                <label>Кассир</label>
+                <select id="shift-cashier-select" class="form-select" style="width:100%"></select>
+              </div>
+              <button class="btn btn-success" style="margin-top:22px" onclick="openShift()">▶ Открыть смену</button>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">Открытые смены</div>
+            <div id="shifts-open-list"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">Закрытые смены (архив)</div>
+            <div id="shifts-closed-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- СТАТИСТИКА -->
+      <section class="page" id="page-statistics">
+        <div class="page-header">
+          <div>
+            <h1>Статистика</h1>
+            <p>Финансовая аналитика</p>
+          </div>
+        </div>
+        <div class="cards" id="stats-cards"></div>
+
+        <!-- ГРАФИКИ -->
+        <div class="sales-grid" style="grid-template-columns: 2fr 1.2fr; gap: 16px; margin-bottom: 24px;">
+          <div class="panel" style="margin-bottom: 0;">
+            <div class="panel-title">Динамика продаж и прибыли (30 дней)</div>
+            <div style="position: relative; height: 300px; width: 100%;">
+              <canvas id="chart-sales"></canvas>
+            </div>
+          </div>
+          <div class="panel" style="margin-bottom: 0;">
+            <div class="panel-title">Способы оплаты</div>
+            <div style="position: relative; height: 300px; width: 100%; display: flex; align-items: center; justify-content: center;">
+              <canvas id="chart-payments"></canvas>
+            </div>
+          </div>
+        </div>
+        
+        <div class="panel" style="margin-bottom: 24px;">
+          <div class="panel-title">Структура расходов</div>
+          <div style="position: relative; height: 300px; width: 100%; display: flex; align-items: center; justify-content: center;">
+            <canvas id="chart-expenses" style="max-height: 280px;"></canvas>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Все продажи</div>
+          <div id="stats-sales-table"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Расходы по категориям</div>
+          <div id="stats-expenses-table"></div>
+        </div>
+      </section>
+
+      <!-- РЕВИЗИЯ И СПИСАНИЯ -->
+      <section class="page" id="page-audits">
+        <div class="page-header">
+          <div>
+            <h1>Ревизия и списания</h1>
+            <p>Управление остатками на складе</p>
+          </div>
+        </div>
+        <div class="tabs" id="audits-tabs" style="margin-bottom: 20px;">
+          <button class="tab active" data-atab="writeoffs" onclick="switchAuditsTab('writeoffs')">Списания товаров</button>
+          <button class="tab" data-atab="reconciliation" onclick="switchAuditsTab('reconciliation')">Инвентаризация (Ревизия)</button>
+        </div>
+
+        <!-- ВКЛАДКА СПИСАНИЯ -->
+        <div id="atab-writeoffs">
+          <div class="panel" style="max-width: 600px;">
+            <div class="panel-title">Оформить списание</div>
+            <div class="field" style="position: relative;">
+              <label>Товар (поиск по коду или названию) *</label>
+              <input type="text" id="wo-product-search" placeholder="Начните вводить название или код товара..." autocomplete="off" oninput="onWoSearch()">
+              <div id="wo-search-results" class="sale-results hidden"></div>
+            </div>
+            <div id="wo-selected-product" class="sale-selected hidden">
+              Выбран товар: <strong id="wo-selected-name"></strong> (Текущий остаток: <strong id="wo-selected-qty"></strong>)
+            </div>
+            <input type="hidden" id="wo-product-id">
+            <div class="form-row">
+              <div class="field">
+                <label>Количество для списания *</label>
+                <input type="number" id="wo-qty" min="0.01" step="any" placeholder="0">
+              </div>
+              <div class="field">
+                <label>Причина списания *</label>
+                <select id="wo-reason">
+                  <option value="Брак / Повреждение">Брак / Повреждение</option>
+                  <option value="Недостача">Недостача</option>
+                  <option value="Утеря">Утеря</option>
+                  <option value="Истек срок годности">Истек срок годности</option>
+                  <option value="Прочее">Прочее</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>Примечание</label>
+              <textarea id="wo-note" placeholder="Дополнительная информация (номер акта, детали...)"></textarea>
+            </div>
+            <button class="btn btn-danger" onclick="submitWriteOff()">Списать со склада</button>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">История списаний</div>
+            <div class="table-wrap" id="writeoffs-list-table"></div>
+          </div>
+        </div>
+
+        <!-- ВКЛАДКА РЕВИЗИЯ -->
+        <div id="atab-reconciliation" class="hidden">
+          <div class="panel" id="audit-session-ctrl">
+            <button class="btn btn-primary btn-lg" onclick="startAuditSession()">▶ Начать новую ревизию</button>
+          </div>
+          
+          <div class="panel hidden" id="audit-session-panel">
+            <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center;">
+              <span>Проведение ревизии (введите фактическое количество)</span>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-secondary btn-sm" onclick="cancelAuditSession()">Отмена</button>
+                <button class="btn btn-success btn-sm" onclick="completeAuditSession()">✓ Завершить ревизию</button>
+              </div>
+            </div>
+            <div class="toolbar">
+              <div class="search-box">
+                <span>🔍</span>
+                <input type="text" id="audit-search" placeholder="Фильтр по товарам в ревизии..." oninput="renderAuditSessionTable()">
+              </div>
+            </div>
+            <div class="table-wrap" style="max-height: 500px; overflow-y: auto;">
+              <table id="audit-session-table">
+                <thead>
+                  <tr>
+                    <th>Код</th>
+                    <th>Товар</th>
+                    <th style="width: 100px; text-align: center;">Учёт (сист)</th>
+                    <th style="width: 120px; text-align: center;">Факт</th>
+                    <th style="width: 100px; text-align: center;">Разница</th>
+                  </tr>
+                </thead>
+                <tbody id="audit-session-body">
+                  <!-- Динамическое наполнение -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">История ревизий</div>
+            <div class="table-wrap" id="audits-archive-table"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛКА ТОВАР -->
+<div class="overlay" id="modal-product">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-product-title">Новый товар</h3>
+      <button class="modal-close" onclick="closeModal(&#39;modal-product&#39;)">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="product-edit-id">
+      <div class="form-row">
+        <div class="field">
+          <label>Код товара (артикул) *</label>
+          <input type="text" id="product-code" placeholder="BRK-001" style="text-transform:uppercase">
+        </div>
+        <div class="field">
+          <label>Штрих-код (EAN)</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="product-barcode" placeholder="4607123456789" oninput="renderBarcodePreview()" style="flex:1">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="generateProductBarcode()">Создать</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Название товара *</label>
+          <input type="text" id="product-name" placeholder="Например: Тормозные колодки">
+        </div>
+        <div class="field">
+          <label>Категория</label>
+          <select id="product-category"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Количество *</label>
+          <input type="number" id="product-qty" min="0" value="0">
+        </div>
+        <div class="field admin-only">
+          <label>Цена закупа (₸)</label>
+          <input type="number" id="product-purchase" min="0" value="0">
+        </div>
+        <div class="field">
+          <label>Цена продажи (₸) *</label>
+          <input type="number" id="product-price" min="0" value="0" oninput="renderBarcodePreview()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Мин. остаток (предупреждение)</label>
+          <input type="number" id="product-min" min="0" value="5">
+        </div>
+        <div class="field">
+          <label>Доп. информация</label>
+          <input type="text" id="product-info" placeholder="Заметки (полка, поставщик...)">
+        </div>
+      </div>
+      <div class="field">
+        <label>Совместимость с автомобилями (через запятую)</label>
+        <input type="text" id="product-compatibility" placeholder="Например: Toyota Camry v50 2011-2015, Lexus ES250">
+      </div>
+      <div class="field">
+        <label>Изображение штрих-кода (для печати наклейки)</label>
+        <div class="barcode-preview" id="product-barcode-preview"></div>
+        <button type="button" class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="printProductBarcode()">🖨 Печать штрих-кода</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal(&#39;modal-product&#39;)">Отмена</button>
+      <button class="btn btn-primary" onclick="saveProduct()">Сохранить</button>
+    </div>
+    </div>
+  </div>
+
+
+<!-- МОДАЛКА КАТЕГОРИИ -->
+<div class="overlay" id="modal-categories">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Разделы (Категории)</h3>
+      <button class="modal-close" onclick="closeModal(&#39;modal-categories&#39;)">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input type="text" id="new-category-name" placeholder="Название раздела" style="flex:1">
+        <button class="btn btn-primary" onclick="addCategory()">Добавить</button>
+      </div>
+      <div class="table-wrap">
+        <table id="categories-table">
+          <thead><tr><th>Название</th><th style="width:40px"></th></tr></thead>
+          <tbody id="categories-list"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛКА РАСХОД -->
+<div class="overlay" id="modal-expense">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Новый расход</h3>
+      <button class="modal-close" onclick="closeModal(&#39;modal-expense&#39;)">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Категория *</label>
+        <select id="expense-category">
+          <option value="Доставка">Доставка</option>
+          <option value="Возврат">Возврат</option>
+          <option value="Личный вывод">Личный вывод</option>
+          <option value="Аренда">Аренда</option>
+          <option value="Коммунальные">Коммунальные</option>
+          <option value="Зарплата">Зарплата</option>
+          <option value="Прочее">Прочее</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Сумма (₸) *</label>
+        <input type="number" id="expense-amount" min="0" step="0.01" placeholder="0">
+      </div>
+      <div class="field">
+        <label>Примечание</label>
+        <textarea id="expense-note" placeholder="Описание расхода..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal(&#39;modal-expense&#39;)">Отмена</button>
+      <button class="btn btn-primary" onclick="saveExpense()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- КАССИР -->
+<div class="overlay" id="modal-cashier">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-cashier-title">Кассир</h3>
+      <button class="modal-close" onclick="closeModal(&#39;modal-cashier&#39;)">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cashier-edit-id">
+      <div class="field" id="cashier-login-field">
+        <label>Логин *</label>
+        <input type="text" id="cashier-username" placeholder="Например: cashier2" autocomplete="off">
+        <small id="cashier-login-hint" style="color:var(--dim);font-size:12px;display:none;margin-top:4px"></small>
+      </div>
+      <div class="field">
+        <label>Имя (ФИО) *</label>
+        <input type="text" id="cashier-name" placeholder="Иванов Иван">
+      </div>
+      <div class="field">
+        <label>Пароль <span id="cashier-pass-hint" style="color:var(--dim)">*</span></label>
+        <input type="password" id="cashier-password" placeholder="Новый пароль">
+      </div>
+      <div class="field hidden" id="cashier-active-field">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="cashier-active" checked=""> Аккаунт активен
+        </label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal(&#39;modal-cashier&#39;)">Отмена</button>
+      <button class="btn btn-primary" onclick="saveCashier()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ПРИГЛАШЕНИЕ КАССИРА (Supabase Auth) -->
+<div class="overlay" id="modal-invite-cashier">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <h3>Пригласить кассира</h3>
+      <button class="modal-close" onclick="closeModal(&#39;modal-invite-cashier&#39;)">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Будет создан аккаунт Supabase (email + пароль). Кассир сможет войти и выбрать этот магазин.</p>
+      <form id="invite-cashier-form">
+        <div class="field">
+          <label>Имя кассира *</label>
+          <input type="text" id="invite-name" required placeholder="Кассир 1">
+        </div>
+        <div class="field">
+          <label>Логин (электронная почта) *</label>
+          <input type="email" id="invite-email" required placeholder="cashier@example.com">
+        </div>
+        <div class="field">
+          <label>Временный пароль *</label>
+          <input type="password" id="invite-password" required minlength="6" placeholder="Мин. 6 символов">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%">Отправить приглашение</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ПОДТВЕРЖДЕНИЕ -->
+<div class="overlay" id="modal-confirm">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head">
+      <h3 id="confirm-title">Подтверждение</h3>
+      <button class="modal-close" onclick="closeModal(&#39;modal-confirm&#39;)">×</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-msg" style="color:var(--muted);line-height:1.6"></p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal(&#39;modal-confirm&#39;)">Отмена</button>
+      <button class="btn btn-danger" id="confirm-ok">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛКА СКАНЕРА -->
+<div class="overlay" id="modal-scanner">
+  <div class="modal" style="max-width: 480px;">
+    <div class="modal-head">
+      <h3>Сканирование штрих-кода</h3>
+      <button class="modal-close" onclick="stopCameraScanner()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="scanner-reader" style="width: 100%; min-height: 280px; background: #000; border-radius: 8px; overflow: hidden;"></div>
+      <p style="font-size:13px;color:var(--muted);margin-top:10px;text-align:center;">Разрешите доступ к камере и поместите штрих-код в рамку.</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="stopCameraScanner()">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛКА ВОЗВРАТА -->
+<div class="overlay" id="modal-return">
+  <div class="modal" style="max-width: 600px;">
+    <div class="modal-head">
+      <h3>Оформление возврата товара</h3>
+      <button class="modal-close" onclick="closeModal('modal-return')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="return-sale-id">
+      <input type="hidden" id="return-customer-id">
+      <div style="margin-bottom: 12px; font-size: 14px; color: var(--muted);" id="return-receipt-meta"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Товар</th>
+              <th style="width: 80px; text-align: center;">Куплено</th>
+              <th style="width: 120px; text-align: center;">К возврату</th>
+              <th style="width: 100px; text-align: right;">Сумма возврата</th>
+            </tr>
+          </thead>
+          <tbody id="return-items-body">
+            <!-- Строки возврата -->
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:16px;font-weight:700;font-size:16px;">
+        Итого к возврату: <span id="return-total-refund" style="margin-left:8px; color:var(--err);">0 ₸</span>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('modal-return')">Отмена</button>
+      <button class="btn btn-danger" onclick="submitReturn()">Подтвердить возврат</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode/html5-qrcode.min.js"></script>
+<script>
+(function () {
+  var APP_SCRIPTS = ['config.js', 'supabase-init.js', 'ap-access.js', 'ap-auth.js', 'ap-db.js', 'ap-backup.js', 'ap-screens.js'];
+  function loadOne(path) {
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = path;
+      s.onload = function () { resolve(path); };
+      s.onerror = function () { reject(new Error(path)); };
+      document.head.appendChild(s);
+    });
+  }
+  function loadScript(name) {
+    return loadOne('js/' + name).catch(function () { return loadOne(name); });
+  }
+  window.__apScriptsReady = Promise.all(APP_SCRIPTS.map(loadScript));
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  function ensureApDb() {
+    if (window.ApDb && window.ApAuth && window.ApScreens) return true;
+    alert(
+      'Не загружены файлы приложения (ap-db.js, ap-auth.js…).\n\n' +
+      'На GitHub нужна папка js/ с файлами ИЛИ все .js в корне с именем ap-auth.js (без пробела).\n' +
+      'См. docs/ИСПРАВИТЬ_СТРУКТУРУ_GITHUB.md'
+    );
+    return false;
+  }
+
+  // ─── MOBILE DEBUG (чтобы ловить ошибки на телефоне) ───
+  // Если после "Войти" экран становится пустым, чаще всего это JS-ошибка.
+  // Этот обработчик покажет текст ошибки прямо на телефоне.
+  window.addEventListener('error', function (e) {
+    try {
+      alert('Ошибка в приложении: ' + (e && e.message ? e.message : 'unknown') + '\nСтрока: ' + (e && e.lineno ? e.lineno : '?'));
+    } catch (err) {}
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    try {
+      var msg = (e && e.reason && (e.reason.message || e.reason)) ? (e.reason.message || e.reason) : 'unknown';
+      alert('Ошибка (Promise): ' + msg);
+    } catch (err) {}
+  });
+
+  // ─── SUPABASE: данные магазина (кэш + синхронизация) ───
+  const PAY_LABELS = { cash: 'Наличные', kaspi: 'Kaspi', transfer: 'Перевод', mixed: 'Смешанная' };
+  const ROLE_LABELS = { admin: 'Администратор', cashier: 'Кассир' };
+
+  let currentStoreId = null;
+  let currentUser = null;
+  window.currentUser = null;
+  window.currentStoreId = null;
+  let currentPayment = 'cash';
+  let confirmCallback = null;
+
+  function getCurrentStoreName() {
+    var m = window.ApAuth && window.ApAuth.getCurrentStore();
+    return m ? m.storeName : 'Магазин';
+  }
+
+  function getProducts() { return window.ApDb ? window.ApDb.getProducts() : []; }
+  function setProducts(arr) { if (window.ApDb) window.ApDb.setProducts(arr); }
+  function getSales() { return window.ApDb ? window.ApDb.getSales() : []; }
+  function setSales(arr) { if (window.ApDb) window.ApDb.setSales(arr); }
+  function getExpenses() { return window.ApDb ? window.ApDb.getExpenses() : []; }
+  function setExpenses(arr) { if (window.ApDb) window.ApDb.setExpenses(arr); }
+  function getUsers() { return window.ApDb ? window.ApDb.getUsers() : []; }
+  function setUsers(arr) { /* members managed via Supabase */ }
+  function getShifts() { return window.ApDb ? window.ApDb.getShifts() : []; }
+  function setShifts(arr) { if (window.ApDb) window.ApDb.setShifts(arr); }
+  function getCustomers() { return window.ApDb ? window.ApDb.getCustomers() : []; }
+  function setCustomers(arr) { if (window.ApDb) window.ApDb.setCustomers(arr); }
+  function getCategories() { return window.ApDb ? window.ApDb.getCategories() : []; }
+  function setCategories(arr) { if (window.ApDb) window.ApDb.setCategories(arr); }
+
+  window.openInviteCashierModal = function () {
+    if (!isAdmin()) { toast('Только администратор', 'err'); return; }
+    openModal('modal-invite-cashier');
+  };
+
+  function uid() {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0;
+      var v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  function findUserByLogin(usernameOrEmail) {
+    if (!usernameOrEmail) return null;
+    const norm = usernameOrEmail.toLowerCase().trim();
+    return getUsers().find(function (u) {
+      const email = (u.email || '').toLowerCase();
+      const un = (u.username || '').toLowerCase();
+      return (email === norm || un === norm || email.split('@')[0] === norm) && u.active !== false;
+    });
+  }
+
+  function getCashiers() {
+    return getUsers().filter(function (u) { return u.role === 'cashier'; });
+  }
+
+  function getOpenShiftForCashier(usernameOrId) {
+    const norm = (usernameOrId || '').toLowerCase();
+    return getShifts().find(function (s) {
+      if (s.status !== 'open') return false;
+      if (s.cashierId === usernameOrId) return true;
+      return (s.cashierUsername || '').toLowerCase() === norm;
+    });
+  }
+
+  function migrateProducts() {
+    const list = getProducts();
+    let changed = false;
+    const migrated = list.map(function (p, i) {
+      const code = (p.code || '').trim().toUpperCase();
+      if (!code) {
+        changed = true;
+        return Object.assign({}, p, { code: 'T' + String(i + 1).padStart(3, '0') });
+      }
+      if (code !== p.code) {
+        changed = true;
+        return Object.assign({}, p, { code: code });
+      }
+      return p;
+    });
+    if (changed) setProducts(migrated);
+    migrateBarcodes();
+  }
+
+  function migrateBarcodes() {
+    const list = getProducts();
+    let changed = false;
+    let num = 1;
+    const migrated = list.map(function (p) {
+      if (p.barcode && normalizeBarcode(p.barcode)) return p;
+      changed = true;
+      var bc = generateEAN13(num++);
+      return Object.assign({}, p, { barcode: bc });
+    });
+    if (changed) setProducts(migrated);
+  }
+
+  function migrateSalesRecords() {
+    const sales = getSales();
+    if (!sales.length) return;
+    const products = getProducts();
+    let changed = false;
+    const migrated = sales.map(function (s) {
+      let out = s;
+      if (!out.receiptId) { out = Object.assign({}, out, { receiptId: out.id }); changed = true; }
+      if (out.purchasePrice == null) {
+        const p = out.productId ? products.find(function (x) { return x.id === out.productId; }) : null;
+        out = Object.assign({}, out, { purchasePrice: p ? (Number(p.purchasePrice) || 0) : 0 });
+        changed = true;
+      }
+      return out;
+    });
+    if (changed) setSales(migrated);
+  }
+
+  function normalizeBarcode(str) {
+    return String(str || '').replace(/\s/g, '').trim();
+  }
+
+  function normalizeCode(str) {
+    return (str || '').trim().toUpperCase();
+  }
+
+  function matchProductsForSale(term) {
+    const t = term.trim().toLowerCase();
+    const tBar = normalizeBarcode(term).toLowerCase();
+    if (!t && !tBar) return [];
+    return getProducts().filter(function (p) {
+      if (p.quantity <= 0) return false;
+      const code = (p.code || '').toLowerCase();
+      const barcode = (p.barcode || '').toLowerCase();
+      const name = p.name.toLowerCase();
+      const comp = (p.compatibility || '').toLowerCase();
+      return code.indexOf(t) >= 0 || name.indexOf(t) >= 0 || comp.indexOf(t) >= 0 || (tBar && barcode.indexOf(tBar) >= 0);
+    });
+  }
+
+  function generateEAN13(seed) {
+    var s = String(200000000000 + (seed % 99999999999));
+    while (s.length < 12) s = '0' + s;
+    var sum = 0;
+    for (var i = 0; i < 12; i++) {
+      sum += parseInt(s[i], 10) * (i % 2 === 0 ? 1 : 3);
+    }
+    var check = (10 - (sum % 10)) % 10;
+    return s + check;
+  }
+
+  function findProductByBarcode(term, requireStock) {
+    var t = normalizeBarcode(term);
+    if (!t) return null;
+    var found = getProducts().find(function (p) {
+      return p.barcode && normalizeBarcode(p.barcode) === t;
+    });
+    if (!found) return null;
+    if (requireStock && found.quantity <= 0) return null;
+    return found;
+  }
+
+  function findProductByCode(term, requireStock) {
+    var t = normalizeCode(term);
+    if (!t) return null;
+    var found = getProducts().find(function (p) {
+      return (p.code || '').toUpperCase() === t;
+    });
+    if (!found) return null;
+    if (requireStock && found.quantity <= 0) return null;
+    return found;
+  }
+
+  function findProductByScan(term) {
+    var bc = findProductByBarcode(term, true);
+    if (bc) return bc;
+    var code = findProductByCode(term, true);
+    if (code) return code;
+    var bcNoStock = findProductByBarcode(term, false);
+    if (bcNoStock && bcNoStock.quantity <= 0) {
+      toast('Товар «' + bcNoStock.name + '» нет на складе', 'warn');
+      return null;
+    }
+    var codeNoStock = findProductByCode(term, false);
+    if (codeNoStock && codeNoStock.quantity <= 0) {
+      toast('Товар «' + codeNoStock.name + '» нет на складе', 'warn');
+    }
+    return null;
+  }
+
+  // ─── CUSTOMERS ───
+  function getCustomerTier(spent) {
+    // Уровни (₸):
+    // Bronze: 0–25 000 (0%, списание до 10%)
+    // Silver: 25 000–50 000 (1%, до 20%)
+    // Gold: 50 000–100 000 (3%, до 30%)
+    // VIP: 100 000+ (8%, до 50%)
+    if (spent >= 100000) return { name: 'VIP', discount: 0.08, bonusEarn: 0.01, maxSpend: 0.50 };
+    if (spent >= 50000) return { name: 'Gold', discount: 0.03, bonusEarn: 0.01, maxSpend: 0.30 };
+    if (spent >= 25000) return { name: 'Silver', discount: 0.01, bonusEarn: 0.01, maxSpend: 0.20 };
+    return { name: 'Bronze', discount: 0, bonusEarn: 0.01, maxSpend: 0.10 };
+  }
+
+  function findCustomerByPhone(phone) {
+    const p = (phone || '').replace(/\D/g, '');
+    if (!p) return null;
+    return getCustomers().find(function (c) { return c.phone.replace(/\D/g, '') === p; });
+  }
+
+  // Code 39 — отрисовка штрих-кода без библиотек
+  var CODE39 = {
+    '0':'nnnwwnwnn','1':'wnnwnnnnw','2':'nnwwnnnnw','3':'wnnwwnnnw','4':'wnnnnwnnw',
+    '5':'nwnnwnnnw','6':'nnnwnwnnw','7':'wnnnwnnnw','8':'nnwnnwnnw','9':'nwnnnwnnw',
+    'A':'wnnnnwnwn','B':'nnwnnwnwn','C':'wnnwwnnnn','D':'nnnnwwnwn','E':'nwnnwwnnn',
+    'F':'nnnnnwwnw','G':'wnnnnwwnn','H':'nwnnnwwnn','I':'nnnwnwwnn','J':'nnnnnwwnw',
+    'K':'wnnnnnnww','L':'nnwwnnnnw','M':'wnnwnnnnw','N':'nnnnwnnww','O':'nnnnwwnwn',
+    'P':'wwnnnnnnw','Q':'nnnnnwwnw','R':'nnnnwwnwn','S':'nwnnnnwnw','T':'nnnnwnnww',
+    'U':'wwnnnnnwn','V':'nnwnnwnnw','W':'wnnwnnwnn','X':'nnnwnwnnw','Y':'nwnnnnwnw',
+    'Z':'nnwwnnnnw','-':'nnnnnwnww','.':'wnnnnwnnw',' ':'nnnnnwwnw','$':'nnnwnwnnw',
+    '/':'nwnnnnwnw','+':'nnnnnwwnw','%':'wnnwnnnwn','*':'nnnwnnwnn'
+  };
+
+  function drawCode39Svg(text) {
+    var enc = '*' + String(text).toUpperCase().replace(/[^0-9A-Z\-\.\ \$\/\+\%]/g, '') + '*';
+    var narrow = 2, wide = 6, height = 56, x = 4, rects = [];
+    for (var i = 0; i < enc.length; i++) {
+      var pat = CODE39[enc[i]];
+      if (!pat) continue;
+      for (var j = 0; j < 9; j++) {
+        var w = pat[j] === 'w' ? wide : narrow;
+        if (j % 2 === 0) rects.push('<rect x="' + x + '" y="2" width="' + w + '" height="' + (height - 4) + '" fill="#111"/>');
+        x += w;
+      }
+      x += narrow;
+    }
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="' + (x + 4) + '" height="' + height + '">' + rects.join('') + '</svg>';
+  }
+
+  function barcodePriceLabel() {
+    var price = parseFloat(document.getElementById('product-price').value);
+    if (isNaN(price) || price < 0) price = 0;
+    return fmt(price);
+  }
+
+  window.renderBarcodePreview = function () {
+    var el = document.getElementById('product-barcode-preview');
+    if (!el) return;
+    var text = normalizeBarcode(document.getElementById('product-barcode').value);
+    var name = (document.getElementById('product-name').value || '').trim();
+    if (!text) { el.innerHTML = '<span style="color:#999">Введите или создайте штрих-код</span>'; return; }
+    var html = '';
+    if (name) html += '<div style="font-weight:600;font-size:14px;color:#111;margin-bottom:6px">' + name.replace(/</g, '&lt;') + '</div>';
+    html += drawCode39Svg(text) + '<div class="barcode-num">' + text + '</div>';
+    html += '<div style="font-size:20px;font-weight:700;color:#111;margin-top:8px">' + barcodePriceLabel() + '</div>';
+    el.innerHTML = html;
+  };
+
+  window.generateProductBarcode = function () {
+    var list = getProducts();
+    var n = list.length + 1;
+    var bc;
+    do {
+      bc = generateEAN13(n++);
+    } while (list.some(function (p) { return p.barcode === bc; }));
+    document.getElementById('product-barcode').value = bc;
+    renderBarcodePreview();
+    toast('Штрих-код создан', 'ok');
+  };
+
+  window.printProductBarcode = function () {
+    var text = normalizeBarcode(document.getElementById('product-barcode').value);
+    var name = document.getElementById('product-name').value.trim() || 'Товар';
+    var priceStr = barcodePriceLabel();
+    if (!text) { toast('Сначала укажите штрих-код', 'err'); return; }
+    var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
+    var w = window.open('', '_blank', 'width=420,height=360');
+    w.document.write('<html><head><title>Штрих-код</title><style>body{text-align:center;font-family:Arial,sans-serif;padding:16px}h3{margin:0 0 8px;font-size:16px}.price{font-size:22px;font-weight:700;margin-top:10px}</style></head><body>' +
+      '<h3>' + esc(name) + '</h3>' +
+      '<div class="price">' + esc(priceStr) + '</div>' +
+      drawCode39Svg(text) +
+      '<div style="font-family:monospace;font-size:16px;letter-spacing:2px;margin-top:8px">' + esc(text) + '</div>' +
+      '<script>window.onload=function(){window.print()}<\/script></body></html>');
+    w.document.close();
+  };
+
+  // USB-сканер: быстрый ввод + Enter
+  var scanBuffer = '';
+  var scanLastKey = 0;
+  var SCAN_MAX_GAP = 45;
+
+  document.addEventListener('keydown', function (e) {
+    if (!currentUser || e.ctrlKey || e.altKey || e.metaKey) return;
+    var page = document.querySelector('.page.active');
+    if (!page || (page.id !== 'page-sales' && page.id !== 'page-products')) return;
+
+    var now = Date.now();
+    var gap = now - scanLastKey;
+    scanLastKey = now;
+
+    if (e.key === 'Enter') {
+      var ae = document.activeElement;
+      if (ae && (ae.id === 'sale-search' || ae.id === 'product-search' || ae.id === 'product-barcode')) {
+        scanBuffer = '';
+        return;
+      }
+      if (scanBuffer.length >= 4 && gap < 120) {
+        handleBarcodeScan(scanBuffer);
+        scanBuffer = '';
+        e.preventDefault();
+      } else {
+        scanBuffer = '';
+      }
+      return;
+    }
+
+    if (e.key.length === 1) {
+      if (gap > SCAN_MAX_GAP) scanBuffer = '';
+      scanBuffer += e.key;
+    }
+  });
+
+  function handleBarcodeScan(raw) {
+    var code = normalizeBarcode(raw);
+    if (!code) return;
+
+    var modalOpen = document.getElementById('modal-product').classList.contains('show');
+    if (modalOpen && isAdmin()) {
+      document.getElementById('product-barcode').value = code;
+      renderBarcodePreview();
+      toast('Штрих-код: ' + code, 'ok');
+      return;
+    }
+
+    var page = document.querySelector('.page.active');
+    var product = findProductByScan(code) || findProductByBarcode(code, false) || findProductByCode(code, false);
+
+    if (!product) {
+      toast('Товар не найден: ' + code, 'err');
+      if (page.id === 'page-products') {
+        document.getElementById('product-search').value = code;
+        renderProducts();
+      } else {
+        document.getElementById('sale-search').value = code;
+      }
+      return;
+    }
+
+    if (page.id === 'page-sales') {
+      if (product.quantity <= 0) {
+        toast('Нет на складе: ' + product.name, 'err');
+        return;
+      }
+      // Быстрый режим кассы: сразу добавляем в чек и очищаем поле,
+      // чтобы можно было пробивать товары один за другим.
+      addToCart(product.id);
+    } else if (page.id === 'page-products') {
+      document.getElementById('product-search').value = product.barcode || product.code || '';
+      renderProducts();
+      toast('Найден: ' + product.name, 'ok');
+    }
+  }
+
+  function focusSaleSearch() {
+    setTimeout(function () {
+      var el = document.getElementById('sale-search');
+      if (el && document.getElementById('page-sales').classList.contains('active')) el.focus();
+    }, 150);
+  }
+
+  // ─── UTILS ───
+  function fmt(n) {
+    return (Number(n) || 0).toLocaleString('ru-RU') + ' ₸';
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleString('ru-RU', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  function todayStr() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function isToday(iso) {
+    return iso && iso.slice(0, 10) === todayStr();
+  }
+
+  function isAdmin() {
+    return currentUser && currentUser.role === 'admin';
+  }
+  window.isAdmin = isAdmin;
+
+  function isSaleActive(s) {
+    return !s.status || s.status === 'completed';
+  }
+
+  function isExpenseActive(e) {
+    return !e.status || e.status === 'active';
+  }
+
+  function saleStatusBadge(s) {
+    return isSaleActive(s)
+      ? '<span class="badge badge-ok">Завершена</span>'
+      : '<span class="badge badge-danger">Отменена</span>';
+  }
+
+  function expenseStatusBadge(e) {
+    return isExpenseActive(e)
+      ? '<span class="badge badge-ok">Активен</span>'
+      : '<span class="badge badge-danger">Отменён</span>';
+  }
+
+  function adminCancelSaleBtn(s) {
+    if (!isAdmin() || !isSaleActive(s)) return '—';
+    return '<button class="btn btn-sm btn-danger" onclick="cancelSaleConfirm(\'' + s.id + '\')">Отменить</button>';
+  }
+
+  function adminCancelExpenseBtn(e) {
+    if (!isAdmin() || !isExpenseActive(e)) return '—';
+    return '<button class="btn btn-sm btn-danger" onclick="cancelExpenseConfirm(\'' + e.id + '\')">Отменить</button>';
+  }
+
+  async function syncWithSupabase() {
+    if (!currentUser || !window.ApDb) return;
+    try {
+      await window.ApDb.refresh();
+      refreshAll();
+    } catch (e) {
+      console.error('Sync error:', e);
+    }
+  }
+
+  // ─── TOASTS ───
+  function toast(msg, type) {
+    const el = document.createElement('div');
+    el.className = 'toast ' + (type || '');
+    el.textContent = msg;
+    document.getElementById('toasts').appendChild(el);
+    setTimeout(function () { el.remove(); }, type === 'err' ? 5000 : 3500);
+  }
+
+  // ─── MODALS ───
+  window.closeModal = function (id) {
+    document.getElementById(id).classList.remove('show');
+    if (id === 'modal-confirm') {
+      document.getElementById('confirm-ok').textContent = 'Удалить';
+      document.getElementById('confirm-ok').className = 'btn btn-danger';
+    }
+  };
+
+  function openModal(id) {
+    document.getElementById(id).classList.add('show');
+  }
+
+  window.confirmAction = function (title, msg, onOk) {
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-msg').textContent = msg;
+    confirmCallback = onOk;
+    openModal('modal-confirm');
+  };
+
+  document.getElementById('confirm-ok').onclick = function () {
+    closeModal('modal-confirm');
+    if (confirmCallback) confirmCallback();
+    confirmCallback = null;
+  };
+
+  // ─── AUTH ───
+  window.showApp = function showApp() {
+    if (window.currentUser) currentUser = window.currentUser;
+    try {
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').classList.add('active');
+      window.currentUser = currentUser;
+      document.getElementById('user-name').textContent = currentUser.name;
+      document.getElementById('user-role').textContent = ROLE_LABELS[currentUser.role] || currentUser.role;
+      applyRoleUI();
+      renderStoreUI();
+      refreshAll();
+    } catch (e) {
+      // Если на телефоне что-то падает — вернёмся на логин и покажем ошибку
+      try { toast('Ошибка после входа: ' + (e && e.message ? e.message : e), 'err'); } catch (err) {}
+      try { showLogin(); } catch (err2) {}
+      throw e;
+    }
+  }
+
+  async function showLogin() {
+    document.getElementById('app').classList.remove('active');
+    currentUser = null;
+    window.currentUser = null;
+    await window.ApAuth.signOut();
+    document.getElementById('auth-screen').style.display = 'flex';
+    window.ApScreens.showScreen('auth-login');
+  }
+
+  function renderStoreUI() {
+    const mobTitle = document.getElementById('mobile-store-title');
+    if (mobTitle) mobTitle.textContent = getCurrentStoreName();
+  }
+
+  function applyRoleUI() {
+    document.querySelectorAll('.admin-only').forEach(function (el) {
+      if (isAdmin()) el.classList.remove('hidden-role');
+      else el.classList.add('hidden-role');
+    });
+    document.querySelectorAll('.cashier-only').forEach(function (el) {
+      if (isAdmin()) el.classList.add('hidden-role');
+      else el.classList.remove('hidden-role');
+    });
+  }
+
+  function canManageShift(shift) {
+    if (!shift) return false;
+    return isAdmin() || shift.cashierId === currentUser.id ||
+      (shift.cashierUsername || '').toLowerCase() === (currentUser.username || '').toLowerCase();
+  }
+
+  document.getElementById('btn-logout').onclick = function () {
+    confirmAction('Выход', 'Выйти из системы?', async function () {
+      await showLogin();
+      toast('Вы вышли из системы');
+    });
+  };
+
+  // ─── NAVIGATION ───
+  window.goPage = function (name) {
+    const sb = document.querySelector('.sidebar');
+    const ov = document.getElementById('sidebar-overlay');
+    if (sb && sb.classList.contains('active')) {
+      sb.classList.remove('active');
+      if (ov) ov.classList.remove('active');
+    }
+    document.querySelectorAll('.nav-btn').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.page === name);
+    });
+    document.querySelectorAll('.page').forEach(function (p) {
+      p.classList.toggle('active', p.id === 'page-' + name);
+    });
+    if (name === 'products') renderProducts();
+    if (name === 'sales') { fillSaleProducts(); clearSaleSelection(); renderSalesToday(); updateSaleShiftBanner(); focusSaleSearch(); }
+    if (name === 'expenses') renderExpenses();
+    if (name === 'statistics') renderStatistics();
+    if (name === 'cards') renderCustomers();
+    if (name === 'dashboard') renderDashboard();
+    if (name === 'cashiers') renderCashiersPage();
+    if (name === 'myshift') renderMyShiftPage();
+    if (name === 'sales') updateSaleShiftBanner();
+  };
+
+  document.querySelectorAll('.nav-btn').forEach(function (btn) {
+    btn.onclick = function () { goPage(btn.dataset.page); };
+  });
+
+  // Mobile menu button toggling drawer
+  const menuToggle = document.getElementById('btn-menu-toggle');
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  if (menuToggle && sidebar && overlay) {
+    menuToggle.onclick = function () {
+      sidebar.classList.add('active');
+      overlay.classList.add('active');
+    };
+    overlay.onclick = function () {
+      sidebar.classList.remove('active');
+      overlay.classList.remove('active');
+    };
+  }
+
+  // ─── DASHBOARD ───
+  function getStats() {
+    const sales = getSales().filter(function (s) { return isToday(s.date) && isSaleActive(s); });
+    const expenses = getExpenses().filter(function (e) { return isToday(e.date) && isExpenseActive(e); });
+    let cash = 0, kaspi = 0, transfer = 0, revenue = 0, expTotal = 0, cogs = 0;
+    sales.forEach(function (s) {
+      revenue += s.total;
+      cogs += (Number(s.purchasePrice) || 0) * (Number(s.quantity) || 0);
+      if (s.payment === 'cash') cash += s.total;
+      else if (s.payment === 'kaspi') kaspi += s.total;
+      else if (s.payment === 'transfer') transfer += s.total;
+      else if (s.payment === 'mixed') {
+        cash += Number(s.cashAmount) || 0;
+        kaspi += Number(s.kaspiAmount) || 0;
+      }
+    });
+    expenses.forEach(function (e) { expTotal += e.amount; });
+    return { cash, kaspi, transfer, revenue, expTotal, cogs, profit: revenue - expTotal - cogs, salesCount: sales.length };
+  }
+
+  function renderDashboard() {
+    const st = getStats();
+    const products = getProducts();
+    const low = products.filter(function (p) { return p.quantity <= (p.minStock || 5); });
+
+    document.getElementById('dash-date').textContent = new Date().toLocaleDateString('ru-RU', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    });
+
+    document.getElementById('dash-cards').innerHTML =
+      card('Товаров', products.length, '') +
+      card('Продаж сегодня', st.salesCount, '') +
+      card('Наличные', fmt(st.cash), '') +
+      card('Kaspi', fmt(st.kaspi), 'kaspi') +
+      card('Переводы', fmt(st.transfer), '') +
+      card('Выручка', fmt(st.revenue), 'ok') +
+      card('Себестоимость', fmt(st.cogs), '') +
+      card('Расходы', fmt(st.expTotal), 'warn') +
+      card('Прибыль', fmt(st.profit), st.profit >= 0 ? 'ok' : 'err');
+
+    document.getElementById('dash-lowstock').innerHTML = low.length
+      ? tableHTML(['Код', 'Название', 'Остаток', 'Мин.'], low.map(function (p) {
+          return ['<span class="code-tag">' + (p.code || '—') + '</span>', p.name, '<span class="low-stock">' + p.quantity + '</span>', p.minStock || 5];
+        }))
+      : '<div class="empty">Все товары в норме ✓</div>';
+
+    const receipts = groupSalesIntoReceipts(getSales().filter(isSaleActive)).slice(0, 10);
+    const dashCols = ['Чек', 'Товаров', 'Сумма', 'Оплата', 'Кассир', 'Время', ''];
+    document.getElementById('dash-recent').innerHTML = receipts.length
+      ? tableHTML(dashCols, receipts.map(function (r) {
+          return [
+            '<span class="code-tag">№ ' + r.id.slice(-6) + '</span>',
+            r.items.reduce(function (sum, it) { return sum + (Number(it.quantity) || 0); }, 0),
+            fmt(r.total),
+            badgePay(r.payment),
+            r.userName || '—',
+            fmtDate(r.date),
+            '<button class="btn btn-sm btn-secondary" onclick="openReceipt(\'' + r.id + '\\\')">Открыть</button>'
+          ];
+        }))
+      : '<div class="empty">Продаж пока нет</div>';
+  }
+
+  function card(label, value, cls) {
+    return '<div class="card ' + cls + '"><div class="card-label">' + label + '</div><div class="card-value">' + value + '</div></div>';
+  }
+
+  // ─── PRODUCTS ───
+  function syncProductFilterUI() {
+    const sel = document.getElementById('filter-category');
+    if (!sel) return;
+    const current = sel.value || '';
+    const cats = getCategories();
+    sel.innerHTML = '<option value="">Все категории</option>' +
+      cats.map(function (c) { return '<option value="' + c.id + '">' + c.name + '</option>'; }).join('');
+    // restore selection if still exists
+    if (current && cats.some(function (c) { return c.id === current; })) sel.value = current;
+    else sel.value = '';
+  }
+
+  window.renderProducts = function () {
+    syncProductFilterUI();
+    const search = (document.getElementById('product-search').value || '').toLowerCase();
+    const lowOnly = document.getElementById('filter-low').checked;
+    const cat = (document.getElementById('filter-category').value || '').trim();
+    const minPrice = parseFloat(document.getElementById('filter-price-min').value);
+    const maxPrice = parseFloat(document.getElementById('filter-price-max').value);
+    const sort = (document.getElementById('filter-sort').value || 'name_asc').trim();
+    let list = getProducts();
+    if (search) list = list.filter(function (p) {
+      return p.name.toLowerCase().includes(search) ||
+        (p.code || '').toLowerCase().includes(search) ||
+        (p.barcode || '').toLowerCase().includes(search) ||
+        (p.compatibility || '').toLowerCase().includes(search);
+    });
+    if (cat) list = list.filter(function (p) { return (p.category || '') === cat; });
+    if (!isNaN(minPrice)) list = list.filter(function (p) { return (Number(p.price) || 0) >= minPrice; });
+    if (!isNaN(maxPrice)) list = list.filter(function (p) { return (Number(p.price) || 0) <= maxPrice; });
+    if (lowOnly) list = list.filter(function (p) { return p.quantity <= (p.minStock || 5); });
+
+    // sorting
+    list = list.slice().sort(function (a, b) {
+      const an = (a.name || '');
+      const bn = (b.name || '');
+      const ap = Number(a.price) || 0;
+      const bp = Number(b.price) || 0;
+      const aq = Number(a.quantity) || 0;
+      const bq = Number(b.quantity) || 0;
+      switch (sort) {
+        case 'price_asc': return ap - bp;
+        case 'price_desc': return bp - ap;
+        case 'qty_asc': return aq - bq;
+        case 'qty_desc': return bq - aq;
+        case 'name_asc':
+        default:
+          return an.localeCompare(bn, 'ru', { sensitivity: 'base' });
+      }
+    });
+
+    document.getElementById('products-count').textContent = 'Всего: ' + getProducts().length + ' товаров';
+
+    const admin = isAdmin();
+    const cols = ['Категория', 'Код', 'Штрих-код', 'Название'];
+    if (admin) cols.push('Закуп');
+    cols.push('Цена', 'Количество');
+    if (admin) cols.push('Действия');
+
+    const rows = list.map(function (p) {
+      const low = p.quantity <= (p.minStock || 5);
+      const qty = low ? '<span class="low-stock">' + p.quantity + ' ⚠</span>' : p.quantity;
+      const cat = p.category ? '<span class="badge badge-info">' + p.category + '</span>' : '—';
+      
+      let nameCell = p.name;
+      if (p.info) nameCell += '<br><span style="font-size:12px;color:var(--muted)">' + p.info + '</span>';
+      if (p.compatibility) nameCell += '<br><span style="font-size:11px;color:var(--accent);background:rgba(59,130,246,0.1);padding:2px 6px;border-radius:4px;">🚗 ' + p.compatibility + '</span>';
+      
+      const row = [
+        cat,
+        '<span class="code-tag">' + (p.code || '—') + '</span>',
+        '<span class="barcode-tag">' + (p.barcode || '—') + '</span>',
+        nameCell
+      ];
+      
+      if (admin) row.push(fmt(p.purchasePrice || 0));
+      row.push(fmt(p.price), qty);
+      if (admin) {
+        row.push('<div class="actions">' +
+          '<button class="icon-btn" onclick="editProduct(\'' + p.id + '\')">✏️</button>' +
+          '<button class="icon-btn del" onclick="deleteProduct(\'' + p.id + '\')">🗑</button></div>');
+      }
+      return row;
+    });
+
+    document.getElementById('products-table').innerHTML = list.length
+      ? tableHTML(cols, rows)
+      : '<div class="empty">Товары не найдены</div>';
+  };
+
+  window.openProductModal = function (id) {
+    document.getElementById('product-edit-id').value = id || '';
+    document.getElementById('modal-product-title').textContent = id ? 'Редактировать товар' : 'Новый товар';
+    
+    const catSel = document.getElementById('product-category');
+    catSel.innerHTML = '<option value="">Без категории</option>' + 
+      getCategories().map(function(c) { return '<option value="' + c.id + '">' + c.name + '</option>'; }).join('');
+
+    if (id) {
+      const p = getProducts().find(function (x) { return x.id === id; });
+      if (p) {
+        document.getElementById('product-code').value = p.code || '';
+        document.getElementById('product-barcode').value = p.barcode || '';
+        document.getElementById('product-name').value = p.name || '';
+        document.getElementById('product-category').value = p.category || '';
+        document.getElementById('product-qty').value = p.quantity || 0;
+        document.getElementById('product-purchase').value = p.purchasePrice || 0;
+        document.getElementById('product-price').value = p.price || 0;
+        document.getElementById('product-min').value = p.minStock || 5;
+        document.getElementById('product-info').value = p.info || '';
+        document.getElementById('product-compatibility').value = p.compatibility || '';
+        renderBarcodePreview();
+      }
+    } else {
+      document.getElementById('product-code').value = '';
+      document.getElementById('product-barcode').value = '';
+      document.getElementById('product-name').value = '';
+      document.getElementById('product-category').value = '';
+      document.getElementById('product-qty').value = 0;
+      document.getElementById('product-purchase').value = 0;
+      document.getElementById('product-price').value = 0;
+      document.getElementById('product-min').value = 5;
+      document.getElementById('product-info').value = '';
+      document.getElementById('product-compatibility').value = '';
+      renderBarcodePreview();
+    }
+    openModal('modal-product');
+  };
+
+  window.editProduct = function (id) { openProductModal(id); };
+
+  // ─── CATEGORIES ───
+  window.openCategoriesModal = function() {
+    renderCategoriesList();
+    openModal('modal-categories');
+  };
+
+  function renderCategoriesList() {
+    const list = getCategories();
+    document.getElementById('categories-list').innerHTML = list.length ? list.map(function(c) {
+      return '<tr><td>' + c.name + '</td>' +
+        '<td style="text-align:center"><button class="icon-btn del" onclick="deleteCategory(\'' + c.id + '\')">✕</button></td></tr>';
+    }).join('') : '<tr><td colspan="2" class="empty">Нет разделов</td></tr>';
+  }
+
+  window.addCategory = function() {
+    const name = document.getElementById('new-category-name').value.trim();
+    if (!name) return;
+    let list = getCategories();
+    if (list.some(function(c) { return c.name.toLowerCase() === name.toLowerCase(); })) {
+      toast('Раздел уже существует', 'err'); return;
+    }
+    list.push({ id: uid(), name: name });
+    setCategories(list);
+    document.getElementById('new-category-name').value = '';
+    renderCategoriesList();
+    toast('Раздел добавлен', 'ok');
+  };
+
+  window.deleteCategory = function(id) {
+    let list = getCategories();
+    list = list.filter(function(c) { return c.id !== id; });
+    setCategories(list);
+    renderCategoriesList();
+    toast('Раздел удален', 'ok');
+  };
+
+  window.saveProduct = function () {
+    const code = normalizeCode(document.getElementById('product-code').value);
+    const barcode = normalizeBarcode(document.getElementById('product-barcode').value);
+    const name = document.getElementById('product-name').value.trim();
+    const category = document.getElementById('product-category').value;
+    const qty = parseFloat(document.getElementById('product-qty').value);
+    const purchasePrice = parseFloat(document.getElementById('product-purchase').value) || 0;
+    const price = parseFloat(document.getElementById('product-price').value);
+    const minStock = parseFloat(document.getElementById('product-min').value) || 5;
+    const info = document.getElementById('product-info').value.trim();
+    const compatibility = document.getElementById('product-compatibility').value.trim();
+    const editId = document.getElementById('product-edit-id').value;
+
+    if (!code) { toast('Введите код товара', 'err'); return; }
+    if (!name) { toast('Введите название товара', 'err'); return; }
+    if (isNaN(qty) || qty < 0) { toast('Некорректное количество', 'err'); return; }
+    if (isNaN(price) || price < 0) { toast('Некорректная цена', 'err'); return; }
+
+    let list = getProducts();
+    const duplicate = list.find(function (p) { return p.code === code && p.id !== editId; });
+    if (duplicate) { toast('Код «' + code + '» уже занят', 'err'); return; }
+    if (barcode) {
+      const dupBc = list.find(function (p) { return p.barcode === barcode && p.id !== editId; });
+      if (dupBc) { toast('Штрих-код «' + barcode + '» уже используется', 'err'); return; }
+    }
+
+    var data = { code: code, barcode: barcode || '', name: name, category: category, quantity: qty, purchasePrice: purchasePrice, price: price, minStock: minStock, info: info, compatibility: compatibility };
+
+    if (editId) {
+      list = list.map(function (p) {
+        return p.id === editId ? Object.assign({ id: p.id }, data) : p;
+      });
+      toast('Товар обновлён', 'ok');
+    } else {
+      if (!data.barcode) data.barcode = generateEAN13(list.length + 1);
+      list.push(Object.assign({ id: uid() }, data));
+      toast('Товар добавлен', 'ok');
+    }
+    setProducts(list);
+    closeModal('modal-product');
+    renderProducts();
+    renderDashboard();
+  };
+
+  window.deleteProduct = function (id) {
+    const p = getProducts().find(function (x) { return x.id === id; });
+    confirmAction('Удалить товар?', 'Товар «' + (p ? p.name : '') + '» будет удалён безвозвратно.', function () {
+      setProducts(getProducts().filter(function (x) { return x.id !== id; }));
+      toast('Товар удалён', 'ok');
+      renderProducts();
+      renderDashboard();
+    });
+  };
+
+  // ─── SALES ───
+  let saleCart = [];
+  let currentCustomer = null;
+
+  window.setPayment = function (btn) {
+    document.querySelectorAll('.pay-btn').forEach(function (b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentPayment = btn.dataset.pay;
+    var cashWrap  = document.getElementById('cash-change-wrap');
+    var mixedWrap = document.getElementById('mixed-payment-wrap');
+    if (cashWrap)  cashWrap.style.display  = (currentPayment === 'cash')  ? 'block' : 'none';
+    if (mixedWrap) mixedWrap.style.display = (currentPayment === 'mixed') ? 'block' : 'none';
+    
+    var totalEl = document.getElementById('sale-total');
+    var finalTotal = totalEl ? parseFloat(totalEl.dataset.value || totalEl.value || 0) : 0;
+
+    if (currentPayment === 'cash') {
+      var cg = document.getElementById('cash-given');  if (cg) cg.value = '';
+      var cc = document.getElementById('cash-change'); if (cc) cc.value = '';
+    }
+    if (currentPayment === 'mixed') {
+      var mc = document.getElementById('mixed-cash');
+      var mk = document.getElementById('mixed-kaspi');
+      var mcg = document.getElementById('mixed-cash-given');
+      var mcc = document.getElementById('mixed-cash-change');
+      if (mc) mc.value = finalTotal;
+      if (mk) mk.value = 0;
+      if (mcg) mcg.value = '';
+      if (mcc) mcc.value = '';
+      calcMixedRemainder();
+    }
+  };
+
+  function fillSaleProducts() {
+    // legacy, but keep empty implementation so it doesn't crash on call
+  }
+
+  function clearSaleSelection() {
+    document.getElementById('sale-search').value = '';
+    document.getElementById('sale-results').classList.add('hidden');
+    saleCart = [];
+    currentCustomer = null;
+    document.getElementById('sale-customer-search').value = '';
+    document.getElementById('sale-customer-name').value = '';
+    document.getElementById('sale-customer-name').style.display = 'none';
+    document.getElementById('sale-customer-info').style.display = 'none';
+    document.getElementById('sale-bonus-wrap').style.display = 'none';
+    document.getElementById('sale-bonus-spend').value = 0;
+    // Reset payment UI
+    var cg = document.getElementById('cash-given');  if (cg) cg.value = '';
+    var cc = document.getElementById('cash-change'); if (cc) cc.value = '';
+    var mc = document.getElementById('mixed-cash');  if (mc) mc.value = '0';
+    var mk = document.getElementById('mixed-kaspi'); if (mk) mk.value = '0';
+    var mcg = document.getElementById('mixed-cash-given'); if (mcg) mcg.value = '';
+    var mcc = document.getElementById('mixed-cash-change'); if (mcc) mcc.value = '';
+    var mr = document.getElementById('mixed-remainder'); if (mr) mr.innerHTML = '';
+    var cashWrap  = document.getElementById('cash-change-wrap');
+    var mixedWrap = document.getElementById('mixed-payment-wrap');
+    if (cashWrap)  cashWrap.style.display  = currentPayment === 'cash'  ? 'block' : 'none';
+    if (mixedWrap) mixedWrap.style.display = currentPayment === 'mixed' ? 'block' : 'none';
+    renderSaleCart();
+  }
+
+  window.onSaleSearch = function () {
+    const term = document.getElementById('sale-search').value;
+    const box = document.getElementById('sale-results');
+    const matches = matchProductsForSale(term);
+    if (!term.trim() || !matches.length) {
+      box.classList.add('hidden');
+      box.innerHTML = '';
+      return;
+    }
+    box.classList.remove('hidden');
+    box.innerHTML = matches.map(function (p) {
+      return '<div class="sale-result-item" onclick="addToCart(\'' + p.id + '\')">' +
+        '<span class="code-tag">' + (p.code || '—') + '</span> ' +
+        (p.barcode ? '<span class="barcode-tag">' + p.barcode + '</span> ' : '') +
+        '<span class="name">' + p.name + '</span><br>' +
+        '<span style="font-size:12px;color:var(--muted)">Остаток: ' + p.quantity + ' · ' + fmt(p.price) + '</span></div>';
+    }).join('');
+  };
+
+  window.onSaleSearchKey = function (e) {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const term = document.getElementById('sale-search').value;
+    const exact = findProductByScan(term);
+    if (exact) {
+      addToCart(exact.id);
+      return;
+    }
+    const matches = matchProductsForSale(term);
+    if (matches.length === 1) addToCart(matches[0].id);
+    else if (matches.length > 1) toast('Найдено несколько товаров — выберите из списка', 'warn');
+    else toast('Товар не найден', 'err');
+  };
+
+  window.addToCart = function (productId) {
+    const shift = getOpenShiftForCashier(currentUser.id) || getOpenShiftForCashier(currentUser.username);
+    if (!shift) {
+      toast('Смена (касса) не открыта. Сначала откройте смену.', 'err');
+      goPage('myshift');
+      return;
+    }
+    const product = getProducts().find(function (p) { return p.id === productId; });
+    if (!product) return;
+    if (product.quantity <= 0) {
+      toast('Товара нет на складе', 'err');
+      return;
+    }
+
+    const existing = saleCart.find(function (c) { return c.id === productId; });
+    if (existing) {
+      if (existing.qty >= product.quantity) {
+        toast('На складе всего ' + product.quantity + ' шт.', 'err');
+        return;
+      }
+      existing.qty++;
+    } else {
+      saleCart.push({
+        id: product.id,
+        code: product.code,
+        barcode: product.barcode,
+        name: product.name,
+        price: product.price,
+        maxQty: product.quantity,
+        qty: 1
+      });
+    }
+
+    document.getElementById('sale-search').value = '';
+    document.getElementById('sale-results').classList.add('hidden');
+    document.getElementById('sale-search').focus();
+    toast('🛒 ' + product.name, 'ok');
+    renderSaleCart();
+  };
+
+  window.updateCartQty = function (productId, delta) {
+    const item = saleCart.find(function (c) { return c.id === productId; });
+    if (!item) return;
+    const newQty = item.qty + delta;
+    if (newQty < 1) {
+      saleCart = saleCart.filter(function (c) { return c.id !== productId; });
+    } else {
+      if (newQty > item.maxQty) {
+        toast('На складе всего ' + item.maxQty + ' шт.', 'err');
+        return;
+      }
+      item.qty = newQty;
+    }
+    renderSaleCart();
+  };
+
+  window.removeFromCart = function (productId) {
+    saleCart = saleCart.filter(function (c) { return c.id !== productId; });
+    renderSaleCart();
+  };
+
+  window.findCustomer = function() {
+    const search = document.getElementById('sale-customer-search').value.trim();
+    if (!search || search.length < 10) { toast('Введите корректный номер', 'err'); return; }
+    let customer = findCustomerByPhone(search);
+    const nameInput = document.getElementById('sale-customer-name');
+    
+    if (customer) {
+      currentCustomer = customer;
+      nameInput.style.display = 'none';
+      toast('Клиент найден: ' + customer.name, 'ok');
+    } else {
+      if (nameInput.style.display === 'none') {
+        nameInput.style.display = 'block';
+        toast('Клиент не найден. Введите имя для создания.', 'warn');
+        return;
+      }
+      const name = nameInput.value.trim();
+      if (!name) { toast('Введите имя клиента', 'err'); return; }
+      customer = { id: uid(), phone: search, name: name, spent: 0, bonusBalance: 0 };
+      const list = getCustomers();
+      list.push(customer);
+      setCustomers(list);
+      currentCustomer = customer;
+      nameInput.style.display = 'none';
+      toast('Клиент создан', 'ok');
+    }
+    renderSaleCart();
+  };
+
+  window.renderSaleCart = function() {
+    const tbody = document.getElementById('sale-cart-body');
+    const subTotalEl = document.getElementById('sale-subtotal');
+    const discountRow = document.getElementById('sale-discount-row');
+    const discountEl = document.getElementById('sale-discount');
+    const bonusRow = document.getElementById('sale-bonus-row');
+    const bonusUsedEl = document.getElementById('sale-bonus-used');
+    const totalEl = document.getElementById('sale-total');
+    const btnComplete = document.getElementById('btn-complete-sale');
+
+    if (!saleCart.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty">Корзина пуста</td></tr>';
+      subTotalEl.textContent = '0 ₸';
+      discountRow.style.display = 'none';
+      bonusRow.style.display = 'none';
+      totalEl.value = '';
+      btnComplete.disabled = true;
+      document.getElementById('sale-customer-info').style.display = 'none';
+      document.getElementById('sale-bonus-wrap').style.display = 'none';
+      return;
+    }
+
+    btnComplete.disabled = false;
+    tbody.innerHTML = saleCart.map(function(c) {
+      return '<tr>' +
+        '<td><div style="font-weight:500">' + c.name + '</div><div style="font-size:12px;color:var(--muted)">' + (c.code || c.barcode || '') + '</div></td>' +
+        '<td style="text-align:center;white-space:nowrap">' +
+          '<button type="button" class="icon-btn" style="padding:4px" onclick="updateCartQty(\'' + c.id + '\', -1)">-</button> ' +
+          '<strong style="display:inline-block;width:24px">' + c.qty + '</strong> ' +
+          '<button type="button" class="icon-btn" style="padding:4px" onclick="updateCartQty(\'' + c.id + '\', 1)">+</button>' +
+        '</td>' +
+        '<td style="text-align:right;font-weight:600">' + fmt(c.price * c.qty) + '</td>' +
+        '<td style="text-align:center"><button type="button" class="icon-btn del" style="padding:4px" onclick="removeFromCart(\'' + c.id + '\')">✕</button></td>' +
+        '</tr>';
+    }).join('');
+
+    let subTotal = saleCart.reduce(function(sum, c) { return sum + c.price * c.qty; }, 0);
+    subTotalEl.textContent = fmt(subTotal);
+
+    let maxBonus = 0;
+    let discountAmt = 0;
+    let subAfterDiscount = subTotal;
+    
+    if (currentCustomer) {
+      const tier = getCustomerTier(currentCustomer.spent || 0);
+      document.getElementById('sale-customer-info').style.display = 'block';
+      document.getElementById('sale-customer-info').innerHTML = 
+        'Уровень: <strong style="color:var(--accent)">' + tier.name + '</strong> (-' + (tier.discount * 100) + '%)<br>' +
+        'Бонусы: <strong>' + fmt(currentCustomer.bonusBalance) + '</strong>';
+      
+      document.getElementById('sale-bonus-wrap').style.display = 'flex';
+      discountAmt = subTotal * tier.discount;
+      subAfterDiscount = subTotal - discountAmt;
+      maxBonus = Math.min(Number(currentCustomer.bonusBalance) || 0, subAfterDiscount * tier.maxSpend);
+      maxBonus = Math.floor(maxBonus); // бонусы — в целых ₸
+      document.getElementById('sale-bonus-max').textContent = '(макс ' + fmt(maxBonus) + ')';
+    } else {
+      document.getElementById('sale-customer-info').style.display = 'none';
+      document.getElementById('sale-bonus-wrap').style.display = 'none';
+      document.getElementById('sale-bonus-spend').value = 0;
+    }
+
+    if (discountAmt > 0) {
+      discountRow.style.display = 'flex';
+      discountEl.textContent = '-' + fmt(discountAmt);
+    } else {
+      discountRow.style.display = 'none';
+    }
+
+    let bonusSpend = parseInt(document.getElementById('sale-bonus-spend').value) || 0;
+    if (bonusSpend > maxBonus) { bonusSpend = maxBonus; document.getElementById('sale-bonus-spend').value = maxBonus; }
+    if (bonusSpend < 0) { bonusSpend = 0; document.getElementById('sale-bonus-spend').value = 0; }
+
+    if (bonusSpend > 0) {
+      bonusRow.style.display = 'flex';
+      bonusUsedEl.textContent = '-' + fmt(bonusSpend);
+    } else {
+      bonusRow.style.display = 'none';
+    }
+
+    let finalTotal = subAfterDiscount - bonusSpend;
+    if (finalTotal < 0) finalTotal = 0;
+    totalEl.value = fmt(finalTotal);
+    totalEl.dataset.value = finalTotal;
+    totalEl.dataset.subAfterDiscount = subAfterDiscount;
+    totalEl.dataset.discountAmt = discountAmt;
+    totalEl.dataset.maxBonus = maxBonus;
+
+    // Автоматическое обновление смешанной оплаты или сдачи
+    if (currentPayment === 'cash') {
+      calcChange();
+    } else if (currentPayment === 'mixed') {
+      var mc = document.getElementById('mixed-cash');
+      var mk = document.getElementById('mixed-kaspi');
+      if (mc && mk) {
+        var cashVal = parseFloat(mc.value) || 0;
+        var kaspiVal = parseFloat(mk.value) || 0;
+        if (cashVal === 0 && kaspiVal === 0) {
+          mc.value = finalTotal;
+          mk.value = 0;
+        } else {
+          if (cashVal > finalTotal) {
+            mc.value = finalTotal;
+            mk.value = 0;
+          } else {
+            mk.value = finalTotal - cashVal;
+          }
+        }
+      }
+      calcMixedRemainder();
+    }
+  };
+
+  window.calcChange = function () {
+    var totalEl = document.getElementById('sale-total');
+    var given   = parseFloat(document.getElementById('cash-given').value) || 0;
+    var total   = parseFloat((totalEl.dataset.value || totalEl.value) || 0);
+    var change  = given - total;
+    var changeEl = document.getElementById('cash-change');
+    var btnComplete = document.getElementById('btn-complete-sale');
+
+    if (given <= 0) {
+      changeEl.value = '';
+      changeEl.style.color = 'var(--ok)';
+      if (btnComplete && saleCart.length > 0) btnComplete.disabled = false;
+    } else if (change < 0) {
+      changeEl.value = 'Не хватает ' + Math.abs(change).toLocaleString('ru-RU') + ' ₸';
+      changeEl.style.color = 'var(--err)';
+      if (btnComplete) btnComplete.disabled = true;
+    } else {
+      changeEl.value = change.toLocaleString('ru-RU') + ' ₸';
+      changeEl.style.color = 'var(--ok)';
+      if (btnComplete && saleCart.length > 0) btnComplete.disabled = false;
+    }
+  };
+
+  window.calcMixedRemainder = function (isCashChanged) {
+    var totalEl  = document.getElementById('sale-total');
+    var total    = parseFloat((totalEl.dataset.value || totalEl.value) || 0);
+    var cashEl   = document.getElementById('mixed-cash');
+    var kaspiEl  = document.getElementById('mixed-kaspi');
+    var cash     = parseFloat(cashEl.value)  || 0;
+    var kaspi    = parseFloat(kaspiEl.value) || 0;
+
+    if (isCashChanged === true) {
+      kaspi = Math.max(0, total - cash);
+      kaspiEl.value = kaspi;
+    } else if (isCashChanged === false) {
+      cash = Math.max(0, total - kaspi);
+      cashEl.value = cash;
+    }
+
+    var sum      = cash + kaspi;
+    var rem      = total - sum;
+    var el       = document.getElementById('mixed-remainder');
+    if (!el) return;
+
+    var cashGivenEl = document.getElementById('mixed-cash-given');
+    var cashChangeEl = document.getElementById('mixed-cash-change');
+    var cashGiven = parseFloat(cashGivenEl.value) || 0;
+    if (cashGiven > 0) {
+      var change = cashGiven - cash;
+      if (change < 0) {
+        cashChangeEl.value = 'Не хватает';
+        cashChangeEl.style.color = 'var(--err)';
+      } else {
+        cashChangeEl.value = change.toLocaleString('ru-RU') + ' ₸';
+        cashChangeEl.style.color = 'var(--ok)';
+      }
+    } else {
+      cashChangeEl.value = '';
+    }
+
+    var btnComplete = document.getElementById('btn-complete-sale');
+    if (Math.abs(rem) < 0.01) {
+      el.innerHTML = '<span style="color:var(--ok);font-weight:600">✓ Сумма совпадает</span>';
+      if (btnComplete && saleCart.length > 0) btnComplete.disabled = false;
+    } else if (rem > 0) {
+      el.innerHTML = '<span style="color:var(--warn)">Осталось доплатить: ' + rem.toLocaleString('ru-RU') + ' ₸</span>';
+      if (btnComplete) btnComplete.disabled = true;
+    } else {
+      el.innerHTML = '<span style="color:var(--err)">Превышение на: ' + Math.abs(rem).toLocaleString('ru-RU') + ' ₸</span>';
+      if (btnComplete) btnComplete.disabled = true;
+    }
+  };
+
+  window.updateSaleTotal = renderSaleCart;
+
+  window.completeSale = function () {
+    if (!saleCart.length) { toast('Корзина пуста', 'err'); return; }
+
+    const shift = getOpenShiftForCashier(currentUser.id) || getOpenShiftForCashier(currentUser.username);
+    if (!shift) { toast('Смена (касса) не открыта. Сначала откройте смену.', 'err'); goPage('myshift'); return; }
+    let shiftId = shift.id;
+
+    const products = getProducts();
+    const sales = getSales();
+    const dateStr = new Date().toISOString();
+    
+    // Check stock
+    for (let i = 0; i < saleCart.length; i++) {
+      const c = saleCart[i];
+      const p = products.find(function(x) { return x.id === c.id; });
+      if (!p || p.quantity < c.qty) {
+        toast('Товар «' + c.name + '» недостаточно на складе', 'err');
+        return;
+      }
+    }
+
+    const stEl = document.getElementById('sale-total');
+    const finalTotal = stEl ? parseFloat(stEl.dataset.value || stEl.value || 0) : 0;
+
+    // Валидация оплаты наличными
+    if (currentPayment === 'cash') {
+      const given = parseFloat(document.getElementById('cash-given').value) || 0;
+      if (given > 0 && given < finalTotal - 0.01) {
+        toast('Сумма от клиента меньше суммы чека', 'err');
+        return;
+      }
+    }
+
+    // Валидация смешанной оплаты
+    let mCash = 0;
+    let mKaspi = 0;
+    if (currentPayment === 'mixed') {
+      mCash  = parseFloat(document.getElementById('mixed-cash').value)  || 0;
+      mKaspi = parseFloat(document.getElementById('mixed-kaspi').value) || 0;
+      if (Math.abs((mCash + mKaspi) - finalTotal) > 0.01) {
+        toast('Сумма смешанной оплаты не совпадает с итогом чека', 'err'); return;
+      }
+      const mixedGiven = parseFloat(document.getElementById('mixed-cash-given').value) || 0;
+      if (mixedGiven > 0 && mixedGiven < mCash - 0.01) {
+        toast('Получено наличных меньше доли наличных в смешанной оплате', 'err'); return;
+      }
+    }
+
+    let subTotal = saleCart.reduce(function(sum, c) { return sum + c.price * c.qty; }, 0);
+    let bonusSpend = parseInt(document.getElementById('sale-bonus-spend').value) || 0;
+    let earnedBonus = 0;
+    let discountAmt = 0;
+    let subAfterDiscount = subTotal;
+
+    if (currentCustomer) {
+      const tier = getCustomerTier(currentCustomer.spent || 0);
+      discountAmt = subTotal * tier.discount;
+      subAfterDiscount = subTotal - discountAmt;
+      let maxBonus = Math.min(Number(currentCustomer.bonusBalance) || 0, subAfterDiscount * tier.maxSpend);
+      maxBonus = Math.floor(maxBonus);
+      if (bonusSpend > maxBonus) bonusSpend = maxBonus;
+      if (bonusSpend < 0) bonusSpend = 0;
+
+      // Бонус начисляется 1% от суммы покупки (после скидки, до списания бонусов)
+      earnedBonus = Math.round(subAfterDiscount * tier.bonusEarn);
+      
+      const customers = getCustomers();
+      const cidx = customers.findIndex(function(c) { return c.id === currentCustomer.id; });
+      if (cidx >= 0) {
+        customers[cidx].spent = (Number(customers[cidx].spent) || 0) + subAfterDiscount;
+        customers[cidx].bonusBalance = Math.max(0, Math.round((Number(customers[cidx].bonusBalance) || 0) - bonusSpend + earnedBonus));
+        setCustomers(customers);
+      }
+    }
+
+    const receiptId = uid();
+    saleCart.forEach(function(c) {
+      const p = products.find(function(x) { return x.id === c.id; });
+      if (p) p.quantity -= c.qty;
+      
+      const ratio = (c.price * c.qty) / subTotal;
+      const itemFinalTotal = finalTotal * ratio;
+
+      sales.push({
+        id: uid(),
+        receiptId: receiptId,
+        shiftId: shiftId,
+        productId: c.id,
+        productCode: c.code || '',
+        productName: c.name,
+        quantity: c.qty,
+        unitPrice: c.price,
+        purchasePrice: p ? (Number(p.purchasePrice) || 0) : 0,
+        total: itemFinalTotal,
+        payment: currentPayment,
+        cashAmount: currentPayment === 'cash' ? finalTotal : (currentPayment === 'mixed' ? mCash : 0),
+        kaspiAmount: currentPayment === 'kaspi' || currentPayment === 'transfer' ? finalTotal : (currentPayment === 'mixed' ? mKaspi : 0),
+        customerId: currentCustomer ? currentCustomer.id : null,
+        userName: currentUser.name,
+        username: currentUser.username,
+        date: dateStr,
+        status: 'completed'
+      });
+    });
+
+    setProducts(products);
+    setSales(sales);
+
+    toast('Продажа оформлена: ' + fmt(finalTotal) + (earnedBonus ? ' (+бонусы)' : ''), 'ok');
+    clearSaleSelection();
+    renderSalesToday();
+    renderDashboard();
+  };
+
+  function renderSalesToday() {
+    const list = getSales().filter(function (s) { return isToday(s.date) && isSaleActive(s); });
+    const receipts = groupSalesIntoReceipts(list);
+    const cols = ['Чек', 'Товаров', 'Сумма', 'Оплата', 'Кассир', 'Время', ''];
+    document.getElementById('sales-today-list').innerHTML = receipts.length
+      ? tableHTML(cols, receipts.map(function (r) {
+          return [
+            '<span class="code-tag">№ ' + r.id.slice(-6) + '</span>',
+            r.items.reduce(function (sum, it) { return sum + (Number(it.quantity) || 0); }, 0),
+            fmt(r.total),
+            badgePay(r.payment),
+            r.userName || '—',
+            fmtDate(r.date),
+            '<button class="btn btn-sm btn-secondary" onclick="openReceipt(\'' + r.id + '\\\')">Открыть</button>'
+          ];
+        }))
+      : '<div class="empty">Продаж сегодня нет</div>';
+  }
+
+  window.cancelSaleConfirm = function (saleId) {
+    const sale = getSales().find(function (s) { return s.id === saleId; });
+    if (!sale || !isSaleActive(sale)) {
+      toast('Продажа уже отменена', 'err');
+      return;
+    }
+    confirmAction(
+      'Отменить продажу?',
+      'Товар «' + sale.productName + '» (' + sale.quantity + ' шт.) вернётся на склад. Сумма ' + fmt(sale.total) + ' не будет учтена в выручке.',
+      function () { cancelSale(saleId); }
+    );
+  };
+
+  function cancelSale(saleId) {
+    const sales = getSales();
+    const idx = sales.findIndex(function (s) { return s.id === saleId; });
+    if (idx < 0) return;
+    const sale = sales[idx];
+    if (!isSaleActive(sale)) return;
+
+    if (sale.productId) {
+      const products = getProducts();
+      const product = products.find(function (p) { return p.id === sale.productId; });
+      if (product) {
+        product.quantity += sale.quantity;
+        setProducts(products);
+      }
+    }
+
+    sales[idx] = Object.assign({}, sale, {
+      status: 'cancelled',
+      cancelledAt: new Date().toISOString(),
+      cancelledBy: currentUser.name
+    });
+    setSales(sales);
+    toast('Продажа отменена, товар возвращён на склад', 'ok');
+    renderSalesToday();
+    renderDashboard();
+    renderProducts();
+    fillSaleProducts();
+    if (document.getElementById('page-statistics').classList.contains('active')) renderStatistics();
+  }
+
+  // ─── EXPENSES ───
+  window.renderExpenses = function () {
+    const list = getExpenses().slice().reverse();
+    const total = list.filter(isExpenseActive).reduce(function (s, e) { return s + e.amount; }, 0);
+    document.getElementById('expenses-total-label').textContent = 'Учтено расходов: ' + fmt(total);
+
+    const cols = ['Категория', 'Сумма', 'Примечание', 'Кто', 'Дата', 'Статус'];
+    if (isAdmin()) cols.push('');
+
+    document.getElementById('expenses-table').innerHTML = list.length
+      ? tableHTML(cols, list.map(function (e) {
+          const sumStyle = isExpenseActive(e) ? 'color:var(--err);font-weight:600' : 'color:var(--dim);text-decoration:line-through';
+          const row = [
+            '<span class="badge badge-warn">' + e.category + '</span>',
+            '<span style="' + sumStyle + '">-' + fmt(e.amount) + '</span>',
+            e.note || '—',
+            e.userName || '—',
+            fmtDate(e.date),
+            expenseStatusBadge(e)
+          ];
+          if (isAdmin()) row.push(adminCancelExpenseBtn(e));
+          return row;
+        }))
+      : '<div class="empty">Расходов пока нет</div>';
+  };
+
+  window.openExpenseModal = function () {
+    document.getElementById('expense-amount').value = '';
+    document.getElementById('expense-note').value = '';
+    openModal('modal-expense');
+  };
+
+  window.saveExpense = function () {
+    const category = document.getElementById('expense-category').value;
+    const amount = parseFloat(document.getElementById('expense-amount').value);
+    const note = document.getElementById('expense-note').value.trim();
+    if (isNaN(amount) || amount <= 0) { toast('Введите сумму расхода', 'err'); return; }
+
+    const list = getExpenses();
+    list.push({
+      id: uid(),
+      category: category,
+      amount: amount,
+      note: note,
+      userName: currentUser.name,
+      date: new Date().toISOString(),
+      status: 'active'
+    });
+    setExpenses(list);
+    closeModal('modal-expense');
+    toast('Расход добавлен', 'ok');
+    renderExpenses();
+    renderDashboard();
+    if (document.getElementById('page-statistics').classList.contains('active')) renderStatistics();
+  };
+
+  window.cancelExpenseConfirm = function (id) {
+    const expense = getExpenses().find(function (e) { return e.id === id; });
+    if (!expense || !isExpenseActive(expense)) {
+      toast('Расход уже отменён', 'err');
+      return;
+    }
+    confirmAction(
+      'Отменить расход?',
+      'Расход «' + expense.category + '» на сумму ' + fmt(expense.amount) + ' не будет учтён в статистике.',
+      function () { cancelExpense(id); }
+    );
+  };
+
+  function cancelExpense(id) {
+    const list = getExpenses().map(function (e) {
+      if (e.id !== id) return e;
+      if (!isExpenseActive(e)) return e;
+      return Object.assign({}, e, {
+        status: 'cancelled',
+        cancelledAt: new Date().toISOString(),
+        cancelledBy: currentUser.name
+      });
+    });
+    setExpenses(list);
+    toast('Расход отменён', 'ok');
+    renderExpenses();
+    renderDashboard();
+    if (document.getElementById('page-statistics').classList.contains('active')) renderStatistics();
+  }
+
+  // ─── STATISTICS ───
+  function renderStatistics() {
+    const sales = getSales();
+    const expenses = getExpenses();
+    let cash = 0, kaspi = 0, transfer = 0, revenue = 0, cogs = 0;
+    sales.filter(isSaleActive).forEach(function (s) {
+      revenue += s.total;
+      cogs += (Number(s.purchasePrice) || 0) * (Number(s.quantity) || 0);
+      if (s.payment === 'cash') cash += s.total;
+      else if (s.payment === 'kaspi') kaspi += s.total;
+      else transfer += s.total;
+    });
+    const expTotal = expenses.filter(isExpenseActive).reduce(function (s, e) { return s + e.amount; }, 0);
+    const profit = revenue - expTotal - cogs;
+
+    document.getElementById('stats-cards').innerHTML =
+      card('Kaspi (всего)', fmt(kaspi), 'kaspi') +
+      card('Наличные (всего)', fmt(cash), '') +
+      card('Переводы (всего)', fmt(transfer), '') +
+      card('Общая выручка', fmt(revenue), 'ok') +
+      card('Себестоимость', fmt(cogs), '') +
+      card('Всего расходов', fmt(expTotal), 'warn') +
+      card('Чистая прибыль', fmt(profit), profit >= 0 ? 'ok' : 'err') +
+      card('Кол-во продаж', sales.filter(isSaleActive).length, '');
+
+    const salesRev = sales.slice().reverse();
+    const statSaleCols = ['Код', 'Товар', 'Кол-во', 'Цена', 'Сумма', 'Оплата', 'Статус', 'Кассир', 'Дата'];
+    if (isAdmin()) statSaleCols.push('');
+    document.getElementById('stats-sales-table').innerHTML = salesRev.length
+      ? '<div class="table-wrap">' + tableHTML(
+          statSaleCols,
+          salesRev.map(function (s) {
+            const row = ['<span class="code-tag">' + (s.productCode || '—') + '</span>', s.productName, s.quantity, fmt(s.unitPrice), fmt(s.total), badgePay(s.payment), saleStatusBadge(s), s.userName, fmtDate(s.date)];
+            if (isAdmin()) row.push(adminCancelSaleBtn(s));
+            return row;
+          })
+        ) + '</div>'
+      : '<div class="empty">Продаж нет</div>';
+
+    const catMap = {};
+    expenses.filter(isExpenseActive).forEach(function (e) {
+      catMap[e.category] = (catMap[e.category] || 0) + e.amount;
+    });
+    const catRows = Object.keys(catMap).map(function (k) {
+      return [k, '<span style="color:var(--err);font-weight:600">-' + fmt(catMap[k]) + '</span>'];
+    });
+    document.getElementById('stats-expenses-table').innerHTML = catRows.length
+      ? '<div class="table-wrap">' + tableHTML(['Категория', 'Сумма'], catRows) + '</div>'
+      : '<div class="empty">Расходов нет</div>';
+  }
+
+  // ─── КАССИРЫ И СМЕНЫ ───
+  window.switchCashiersTab = function (tab) {
+    document.querySelectorAll('#cashiers-tabs .tab').forEach(function (t) {
+      t.classList.toggle('active', t.dataset.ctab === tab);
+    });
+    document.getElementById('ctab-accounts').classList.toggle('hidden', tab !== 'accounts');
+    document.getElementById('ctab-shifts').classList.toggle('hidden', tab !== 'shifts');
+    document.getElementById('ctab-profile').classList.toggle('hidden', tab !== 'profile');
+    var ctabBackup = document.getElementById('ctab-backup');
+    if (ctabBackup) ctabBackup.classList.toggle('hidden', tab !== 'backup');
+    if (tab === 'shifts') renderShifts();
+    if (tab === 'profile') fillAdminProfileForm();
+  };
+
+  window.exportStoreBackup = async function () {
+    if (!isAdmin()) { toast('Только администратор', 'err'); return; }
+    try {
+      await window.ApBackup.exportBackup();
+    } catch (e) {
+      toast(e.message || String(e), 'err');
+    }
+  };
+
+  window.importStoreBackup = function () {
+    if (!isAdmin()) { toast('Только администратор', 'err'); return; }
+    var input = document.getElementById('backup-import-file');
+    var file = input && input.files && input.files[0];
+    if (!file) { toast('Выберите файл .json', 'err'); return; }
+    var replace = document.getElementById('backup-replace-all') && document.getElementById('backup-replace-all').checked;
+    confirmAction(
+      'Восстановить из копии?',
+      replace
+        ? 'Все текущие данные магазина будут заменены содержимым файла. Продолжить?'
+        : 'Данные из файла будут загружены. Рекомендуется включить «Заменить всё» для полного восстановления.',
+      async function () {
+        try {
+          await window.ApBackup.importBackup(file, replace);
+          input.value = '';
+        } catch (e) {
+          toast(e.message || String(e), 'err');
+        }
+      }
+    );
+  };
+
+  async function fillAdminProfileForm() {
+    const user = await window.ApAuth.getCurrentUser();
+    if (!user) return;
+    document.getElementById('admin-username').value = user.email || '';
+    document.getElementById('admin-name').value = currentUser.name || '';
+    document.getElementById('admin-password').value = '';
+    document.getElementById('admin-password2').value = '';
+  }
+
+  window.saveAdminProfile = async function () {
+    const name = document.getElementById('admin-name').value.trim();
+    const password = document.getElementById('admin-password').value;
+    const password2 = document.getElementById('admin-password2').value;
+
+    if (!name) { toast('Введите имя', 'err'); return; }
+    if (password && password.length < 6) { toast('Пароль минимум 6 символов', 'err'); return; }
+    if (password && password !== password2) { toast('Пароли не совпадают', 'err'); return; }
+
+    try {
+      await window.ApAuth.updateProfile(name);
+      if (password) await window.ApAuth.updatePassword(password);
+      currentUser.name = name;
+      window.currentUser = currentUser;
+      document.getElementById('user-name').textContent = name;
+      toast('Профиль сохранён', 'ok');
+      fillAdminProfileForm();
+    } catch (err) {
+      toast(err.message || String(err), 'err');
+    }
+  };
+
+  function renderCashiersPage() {
+    renderCashiersTable();
+    fillShiftCashierSelect();
+    renderShifts();
+    fillAdminProfileForm();
+  }
+
+  function renderCashiersTable() {
+    const cashiers = getCashiers();
+    document.getElementById('cashiers-table').innerHTML = cashiers.length
+      ? tableHTML(['Имя', 'Логин', 'Статус', 'Смена', 'Действия'], cashiers.map(function (u) {
+          const shift = getOpenShiftForCashier(u.username);
+          const shiftInfo = shift
+            ? '<span class="badge badge-ok">Открыта с ' + fmtDate(shift.openedAt) + '</span>'
+            : '<span class="badge badge-warn">Нет смены</span>';
+          const status = u.active !== false
+            ? '<span class="badge badge-ok">Активен</span>'
+            : '<span class="badge badge-danger">Заблокирован</span>';
+          return [
+            u.name, u.username, status, shiftInfo,
+            '<div class="actions">' +
+              '<button class="btn btn-sm btn-secondary" onclick="editCashierAccount(\'' + u.id + '\')">✏️ Аккаунт</button>' +
+              (shift ? '<button class="btn btn-sm btn-danger" onclick="closeShiftConfirm(\'' + shift.id + '\')">⏹ Закрыть смену</button>' : '') +
+            '</div>'
+          ];
+        }))
+      : '<div class="empty">Кассиров нет</div>';
+  }
+
+  function fillShiftCashierSelect() {
+    const sel = document.getElementById('shift-cashier-select');
+    const cashiers = getCashiers().filter(function (u) { return u.active !== false; });
+    const options = cashiers.map(function (u) {
+      const open = getOpenShiftForCashier(u.username);
+      return '<option value="' + u.id + '"' + (open ? ' disabled' : '') + '>' +
+        u.name + ' (' + u.username + ')' + (open ? ' — смена открыта' : '') + '</option>';
+    });
+    // Администратор тоже может открыть смену для себя
+    const adminUser = findUserByLogin(currentUser.username);
+    if (adminUser && adminUser.role === 'admin') {
+      const open = getOpenShiftForCashier(adminUser.username);
+      options.unshift(
+        '<option value="' + adminUser.id + '"' + (open ? ' disabled' : '') + '>' +
+          adminUser.name + ' (' + adminUser.username + ') — админ' + (open ? ' — смена открыта' : '') +
+        '</option>'
+      );
+    }
+    sel.innerHTML = options.join('');
+  }
+
+  window.openCashierModal = function (id) {
+    document.getElementById('cashier-edit-id').value = id || '';
+    document.getElementById('modal-cashier-title').textContent = id ? 'Редактировать кассира' : 'Новый кассир';
+    document.getElementById('cashier-login-field').style.display = 'block';
+    document.getElementById('cashier-active-field').classList.toggle('hidden', !id);
+    document.getElementById('cashier-pass-hint').textContent = id ? '(оставьте пустым, чтобы не менять)' : '*';
+    var hint = document.getElementById('cashier-login-hint');
+    hint.style.display = id ? 'block' : 'none';
+    hint.textContent = id ? 'При смене логина обновятся привязки к сменам этого кассира.' : '';
+
+    if (id) {
+      const u = getUsers().find(function (x) { return x.id === id; });
+      if (u) {
+        document.getElementById('cashier-username').value = u.username;
+        document.getElementById('cashier-name').value = u.name;
+        document.getElementById('cashier-password').value = '';
+        document.getElementById('cashier-active').checked = u.active !== false;
+      }
+    } else {
+      document.getElementById('cashier-username').value = '';
+      document.getElementById('cashier-name').value = '';
+      document.getElementById('cashier-password').value = '';
+      document.getElementById('cashier-active').checked = true;
+    }
+    openModal('modal-cashier');
+  };
+
+  window.editCashierAccount = function (id) { openCashierModal(id); };
+
+  window.saveCashier = async function () {
+    const editId = document.getElementById('cashier-edit-id').value;
+    const name = document.getElementById('cashier-name').value.trim();
+    const active = document.getElementById('cashier-active').checked;
+
+    if (!editId) {
+      closeModal('modal-cashier');
+      openInviteCashierModal();
+      return;
+    }
+    if (!name) { toast('Введите имя кассира', 'err'); return; }
+
+    const u = getUsers().find(function (x) { return x.id === editId; });
+    if (!u || !u.memberId) { toast('Кассир не найден', 'err'); return; }
+
+    try {
+      const store = window.ApAuth.getCurrentStore();
+      const res = await window.ApAuth.client().from('store_members')
+        .update({ display_name: name, active: active })
+        .eq('id', u.memberId)
+        .eq('store_id', store.storeId);
+      if (res.error) throw res.error;
+      await window.ApDb.refresh();
+      toast('Данные кассира сохранены', 'ok');
+      closeModal('modal-cashier');
+      renderCashiersPage();
+    } catch (err) {
+      toast(err.message || String(err), 'err');
+    }
+  };
+
+  window.openShift = function () {
+    let cashier;
+    if (isAdmin()) {
+      const cashierId = document.getElementById('shift-cashier-select').value;
+      cashier = getUsers().find(function (u) { return u.id === cashierId; });
+      if (!cashier) { toast('Выберите кассира', 'err'); return; }
+    } else {
+      cashier = { id: currentUser.id, email: currentUser.username, name: currentUser.name, username: currentUser.username };
+    }
+    const cashierKey = cashier.email || cashier.username || cashier.id;
+    if (getOpenShiftForCashier(cashier.id) || getOpenShiftForCashier(cashierKey)) {
+      toast(isAdmin() ? 'У этого кассира уже открыта смена' : 'Ваша смена уже открыта', 'err');
+      return;
+    }
+    const shifts = getShifts();
+    shifts.push({
+      id: uid(),
+      cashierId: cashier.id,
+      cashierUsername: cashier.email || cashier.username || '',
+      cashierName: cashier.name,
+      openedAt: new Date().toISOString(),
+      closedAt: null,
+      status: 'open',
+      openedBy: currentUser.name
+    });
+    setShifts(shifts);
+    toast('Смена открыта: ' + cashier.name, 'ok');
+    if (isAdmin()) renderCashiersPage();
+    else {
+      renderMyShiftPage();
+      goPage('myshift');
+    }
+    updateSaleShiftBanner();
+  };
+
+  window.closeShiftConfirm = function (shiftId) {
+    const shift = getShifts().find(function (s) { return s.id === shiftId; });
+    if (!shift || shift.status !== 'open') {
+      toast('Смена уже закрыта', 'err');
+      return;
+    }
+    if (!canManageShift(shift)) {
+      toast('Нет прав закрыть эту смену', 'err');
+      return;
+    }
+    document.getElementById('confirm-title').textContent = 'Закрыть смену?';
+    document.getElementById('confirm-msg').textContent =
+      'Смена кассира «' + shift.cashierName + '» будет закрыта навсегда. ' +
+      'Повторно открыть её нельзя. Отчёт будет сохранён в файл Excel.';
+    document.getElementById('confirm-ok').textContent = 'Закрыть и сохранить Excel';
+    document.getElementById('confirm-ok').className = 'btn btn-danger';
+    confirmCallback = function () {
+      document.getElementById('confirm-ok').textContent = 'Удалить';
+      closeShift(shiftId);
+    };
+    openModal('modal-confirm');
+  };
+
+  function closeShift(shiftId) {
+    const shifts = getShifts();
+    const idx = shifts.findIndex(function (s) { return s.id === shiftId; });
+    if (idx < 0) return;
+    const shift = shifts[idx];
+    if (shift.status === 'closed') {
+      toast('Эта смена уже закрыта и не может быть открыта снова', 'err');
+      return;
+    }
+    shift.status = 'closed';
+    shift.closedAt = new Date().toISOString();
+    shift.closedBy = currentUser.name;
+    shift.totals = calcShiftTotals(shiftId);
+    shifts[idx] = shift;
+    setShifts(shifts);
+    exportShiftToExcel(shift);
+    toast('Смена закрыта. Файл Excel сохранён', 'ok');
+    if (isAdmin()) renderCashiersPage();
+    else renderMyShiftPage();
+    updateSaleShiftBanner();
+  }
+
+  function calcShiftTotals(shiftId) {
+    const sales = getSales().filter(function (s) { return s.shiftId === shiftId && isSaleActive(s); });
+    let cash = 0, kaspi = 0, transfer = 0, revenue = 0;
+    sales.forEach(function (s) {
+      revenue += s.total;
+      if (s.payment === 'cash') cash += s.total;
+      else if (s.payment === 'kaspi') kaspi += s.total;
+      else if (s.payment === 'transfer') transfer += s.total;
+    });
+    return { cash: cash, kaspi: kaspi, transfer: transfer, revenue: revenue, salesCount: sales.length };
+  }
+
+  function renderShiftLists(opts) {
+    opts = opts || {};
+    const onlyMine = !!opts.onlyMine;
+    const openEl = document.getElementById(opts.openListId || 'shifts-open-list');
+    const closedEl = document.getElementById(opts.closedListId || 'shifts-closed-list');
+    if (!openEl || !closedEl) return;
+
+    let allShifts = getShifts();
+    if (onlyMine) {
+      allShifts = allShifts.filter(function (s) { return s.cashierUsername === currentUser.username; });
+    }
+
+    const openList = allShifts.filter(function (s) { return s.status === 'open'; });
+    const closedList = allShifts.filter(function (s) { return s.status === 'closed'; }).reverse();
+
+    if (onlyMine) {
+      openEl.innerHTML = openList.length
+        ? tableHTML(['Открыта', 'Кем открыта', ''], openList.map(function (s) {
+            return [
+              fmtDate(s.openedAt), s.openedBy || '—',
+              canManageShift(s) ? '<button class="btn btn-sm btn-danger" onclick="closeShiftConfirm(\'' + s.id + '\')">⏹ Закрыть и Excel</button>' : '—'
+            ];
+          }))
+        : '<div class="empty">Смена не открыта</div>';
+
+      closedEl.innerHTML = closedList.length
+        ? tableHTML(['Открыта', 'Закрыта', 'Продаж', 'Выручка', ''], closedList.map(function (s) {
+            const t = s.totals || calcShiftTotals(s.id);
+            return [
+              fmtDate(s.openedAt), fmtDate(s.closedAt), t.salesCount, fmt(t.revenue),
+              '<button class="btn btn-sm btn-secondary" onclick="exportShiftById(\'' + s.id + '\')">📥 Excel</button>'
+            ];
+          }))
+        : '<div class="empty">Закрытых смен пока нет</div>';
+    } else {
+      openEl.innerHTML = openList.length
+        ? tableHTML(['Кассир', 'Открыта', 'Кем открыта', ''], openList.map(function (s) {
+            return [
+              s.cashierName, fmtDate(s.openedAt), s.openedBy || '—',
+              canManageShift(s) ? '<button class="btn btn-sm btn-danger" onclick="closeShiftConfirm(\'' + s.id + '\')">⏹ Закрыть и Excel</button>' : '—'
+            ];
+          }))
+        : '<div class="empty">Нет открытых смен</div>';
+
+      closedEl.innerHTML = closedList.length
+        ? tableHTML(['Кассир', 'Открыта', 'Закрыта', 'Продаж', 'Выручка', ''], closedList.map(function (s) {
+            const t = s.totals || calcShiftTotals(s.id);
+            return [
+              s.cashierName, fmtDate(s.openedAt), fmtDate(s.closedAt),
+              t.salesCount, fmt(t.revenue),
+              '<button class="btn btn-sm btn-secondary" onclick="exportShiftById(\'' + s.id + '\')">📥 Excel</button>'
+            ];
+          }))
+        : '<div class="empty">Закрытых смен пока нет</div>';
+    }
+  }
+
+  function renderShifts() {
+    renderShiftLists({ onlyMine: false, openListId: 'shifts-open-list', closedListId: 'shifts-closed-list' });
+    fillShiftCashierSelect();
+  }
+
+  function renderMyShiftPage() {
+    const shift = getOpenShiftForCashier(currentUser.id) || getOpenShiftForCashier(currentUser.username);
+    const ctrl = document.getElementById('myshift-controls');
+
+    if (shift) {
+      const t = calcShiftTotals(shift.id);
+      ctrl.innerHTML =
+        '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:16px;justify-content:space-between">' +
+          '<div>' +
+            '<div style="font-size:18px;font-weight:600;color:var(--ok)">● Смена открыта</div>' +
+            '<div style="font-size:14px;color:var(--muted);margin-top:6px">С ' + fmtDate(shift.openedAt) +
+            ' · Продаж: ' + t.salesCount + ' · Выручка: ' + fmt(t.revenue) + '</div>' +
+          '</div>' +
+          '<button class="btn btn-danger btn-lg" onclick="closeShiftConfirm(\'' + shift.id + '\')">⏹ Закрыть смену и Excel</button>' +
+        '</div>';
+    } else {
+      ctrl.innerHTML =
+        '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:16px;justify-content:space-between">' +
+          '<div>' +
+            '<div style="font-size:18px;font-weight:600;color:var(--warn)">Смена закрыта</div>' +
+            '<div style="font-size:14px;color:var(--muted);margin-top:6px">Откройте смену, чтобы оформлять продажи</div>' +
+          '</div>' +
+          '<button class="btn btn-success btn-lg" onclick="openShift()">▶ Открыть мою смену</button>' +
+        '</div>';
+    }
+
+    renderShiftLists({ onlyMine: true, openListId: 'myshift-open-list', closedListId: 'myshift-closed-list' });
+    updateSaleShiftBanner();
+  }
+
+  window.exportShiftById = function (shiftId) {
+    const shift = getShifts().find(function (s) { return s.id === shiftId; });
+    if (shift) exportShiftToExcel(shift);
+  };
+
+  function exportShiftToExcel(shift) {
+    if (!shift) return;
+    const sales = getSales().filter(function (s) { return s.shiftId === shift.id && isSaleActive(s); });
+    const t = shift.totals || calcShiftTotals(shift.id);
+    const receipts = groupSalesIntoReceipts(sales);
+    const storeName = getCurrentStoreName ? getCurrentStoreName() : 'Магазин';
+    const openedAt = new Date(shift.openedAt);
+    const closedAt = shift.closedAt ? new Date(shift.closedAt) : null;
+
+    let cogs = 0;
+    sales.forEach(function (s) {
+      cogs += (Number(s.purchasePrice) || 0) * (Number(s.quantity) || 0);
+    });
+    const grossProfit = (Number(t.revenue) || 0) - cogs;
+
+    // Расходы внутри интервала смены (если смена не закрыта — берем до текущего момента)
+    const expEnd = closedAt || new Date();
+    const expTotal = getExpenses().filter(function (e) {
+      if (!isExpenseActive(e)) return false;
+      if (!e.date) return false;
+      const d = new Date(e.date);
+      return d >= openedAt && d <= expEnd;
+    }).reduce(function (sum, e) { return sum + (Number(e.amount) || 0); }, 0);
+    const netProfit = grossProfit - expTotal;
+
+    function esc(v) {
+      return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    let html = '<html><head><meta charset="UTF-8"></head><body>';
+    html += '<h2>Отчёт по смене — ' + esc(storeName) + '</h2>';
+    html += '<table border="1" cellpadding="5" style="border-collapse:collapse;font-family:Arial">';
+    html += '<tr><td><b>Магазин</b></td><td>' + esc(storeName) + '</td></tr>';
+    html += '<tr><td><b>Кассир</b></td><td>' + esc(shift.cashierName) + '</td></tr>';
+    html += '<tr><td><b>Логин</b></td><td>' + esc(shift.cashierUsername) + '</td></tr>';
+    html += '<tr><td><b>Открыта</b></td><td>' + esc(fmtDate(shift.openedAt)) + '</td></tr>';
+    html += '<tr><td><b>Закрыта</b></td><td>' + esc(shift.closedAt ? fmtDate(shift.closedAt) : '—') + '</td></tr>';
+    html += '<tr><td><b>Закрыл</b></td><td>' + esc(shift.closedBy || '—') + '</td></tr>';
+    html += '<tr><td><b>Строк продаж</b></td><td>' + t.salesCount + '</td></tr>';
+    html += '<tr><td><b>Чеков</b></td><td>' + receipts.length + '</td></tr>';
+    html += '<tr><td><b>Наличные</b></td><td>' + t.cash + '</td></tr>';
+    html += '<tr><td><b>Kaspi</b></td><td>' + t.kaspi + '</td></tr>';
+    html += '<tr><td><b>Переводы</b></td><td>' + t.transfer + '</td></tr>';
+    html += '<tr><td><b>Выручка</b></td><td>' + t.revenue + '</td></tr>';
+    html += '<tr><td><b>Себестоимость</b></td><td>' + cogs + '</td></tr>';
+    html += '<tr><td><b>Валовая прибыль</b></td><td>' + grossProfit + '</td></tr>';
+    html += '<tr><td><b>Расходы (в смене)</b></td><td>' + expTotal + '</td></tr>';
+    html += '<tr><td><b>Чистая прибыль</b></td><td>' + netProfit + '</td></tr>';
+    html += '</table><br>';
+
+    html += '<h3>Чеки за смену</h3>';
+    html += '<table border="1" cellpadding="5" style="border-collapse:collapse">';
+    html += '<tr style="background:#305496;color:#fff"><th>Чек</th><th>Дата</th><th>Товаров (шт)</th><th>Сумма</th><th>Оплата</th><th>Клиент</th><th>Телефон</th></tr>';
+    receipts.forEach(function (r) {
+      const cust = r.customerId ? getCustomers().find(function (c) { return c.id === r.customerId; }) : null;
+      const itemsQty = r.items.reduce(function (sum, it) { return sum + (Number(it.quantity) || 0); }, 0);
+      html += '<tr>' +
+        '<td>' + esc(r.id.slice(-6)) + '</td>' +
+        '<td>' + esc(fmtDate(r.date)) + '</td>' +
+        '<td>' + itemsQty + '</td>' +
+        '<td>' + (Number(r.total) || 0) + '</td>' +
+        '<td>' + esc(PAY_LABELS[r.payment] || r.payment || '') + '</td>' +
+        '<td>' + esc(cust ? cust.name : '—') + '</td>' +
+        '<td>' + esc(cust ? cust.phone : '—') + '</td>' +
+      '</tr>';
+    });
+    if (!receipts.length) html += '<tr><td colspan="7">Нет чеков</td></tr>';
+    html += '</table><br>';
+
+    html += '<h3>Продажи (строки) за смену</h3>';
+    html += '<table border="1" cellpadding="5" style="border-collapse:collapse">';
+    html += '<tr style="background:#4472C4;color:#fff"><th>Чек</th><th>Код</th><th>Товар</th><th>Кол-во</th><th>Цена</th><th>Закуп</th><th>Сумма</th><th>Прибыль</th><th>Оплата</th><th>Дата</th></tr>';
+    sales.forEach(function (s) {
+      const lineCogs = (Number(s.purchasePrice) || 0) * (Number(s.quantity) || 0);
+      const lineProfit = (Number(s.total) || 0) - lineCogs;
+      html += '<tr>' +
+        '<td>' + esc((s.receiptId || s.id).slice(-6)) + '</td>' +
+        '<td>' + esc(s.productCode) + '</td>' +
+        '<td>' + esc(s.productName) + '</td>' +
+        '<td>' + (Number(s.quantity) || 0) + '</td>' +
+        '<td>' + (Number(s.unitPrice) || 0) + '</td>' +
+        '<td>' + (Number(s.purchasePrice) || 0) + '</td>' +
+        '<td>' + (Number(s.total) || 0) + '</td>' +
+        '<td>' + lineProfit + '</td>' +
+        '<td>' + esc(PAY_LABELS[s.payment] || s.payment) + '</td>' +
+        '<td>' + esc(fmtDate(s.date)) + '</td>' +
+      '</tr>';
+    });
+    if (!sales.length) html += '<tr><td colspan="10">Нет продаж</td></tr>';
+    html += '</table></body></html>';
+
+    const safeStore = String(storeName || 'store').replace(/[\\\/:*?"<>|]/g, '').replace(/\s+/g, '_');
+    const fname = 'Смена_' + safeStore + '_' + (shift.cashierUsername || 'cashier') + '_' +
+      (shift.closedAt || shift.openedAt).slice(0, 10).replace(/-/g, '') + '.xls';
+    downloadFile(fname, html, 'application/vnd.ms-excel');
+  }
+  window.exportShiftToExcel = exportShiftToExcel;
+
+  function downloadFile(filename, content, mime) {
+    const blob = new Blob([content], { type: mime });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  }
+
+  function updateSaleShiftBanner() {
+    const banner = document.getElementById('sale-shift-banner');
+    if (isAdmin()) {
+      banner.classList.add('hidden');
+      return;
+    }
+    const shift = getOpenShiftForCashier(currentUser.id) || getOpenShiftForCashier(currentUser.username);
+    banner.classList.remove('hidden');
+    if (shift) {
+      banner.style.borderColor = 'var(--accent)';
+      const t = calcShiftTotals(shift.id);
+      banner.innerHTML =
+        '<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">' +
+          '<div><strong style="color:var(--ok)">● Смена открыта</strong> — с ' + fmtDate(shift.openedAt) +
+          '. Продаж: ' + t.salesCount + ', выручка: ' + fmt(t.revenue) + '</div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+            '<button class="btn btn-sm btn-secondary" onclick="goPage(\'myshift\')">🕐 Моя смена</button>' +
+            '<button class="btn btn-sm btn-danger" onclick="closeShiftConfirm(\'' + shift.id + '\')">Закрыть смену</button>' +
+          '</div></div>';
+    } else {
+      banner.style.borderColor = 'var(--warn)';
+      banner.innerHTML =
+        '<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">' +
+          '<div><strong style="color:var(--warn)">⚠ Смена не открыта</strong> — сначала откройте смену, чтобы продавать</div>' +
+          '<button class="btn btn-sm btn-success" onclick="openShift()">▶ Открыть смену</button>' +
+        '</div>';
+    }
+  }
+
+  // ─── HELPERS ───
+  function badgePay(pay) {
+    const cls = pay === 'kaspi' ? 'badge-kaspi' : 'badge-info';
+    return '<span class="badge ' + cls + '">' + (PAY_LABELS[pay] || pay) + '</span>';
+  }
+
+  function tableHTML(headers, rows) {
+    let h = '<table><thead><tr>';
+    headers.forEach(function (c) { h += '<th>' + c + '</th>'; });
+    h += '</tr></thead><tbody>';
+    rows.forEach(function (row) {
+      h += '<tr>';
+      row.forEach(function (c) { h += '<td>' + c + '</td>'; });
+      h += '</tr>';
+    });
+    return h + '</tbody></table>';
+  }
+
+  function groupSalesIntoReceipts(salesList) {
+    const map = {};
+    (salesList || []).forEach(function (s) {
+      const rid = s.receiptId || s.id; // старые записи без receiptId считаем отдельным чеком
+      if (!map[rid]) {
+        map[rid] = {
+          id: rid,
+          date: s.date,
+          shiftId: s.shiftId || null,
+          customerId: s.customerId || null,
+          payment: s.payment,
+          userName: s.userName,
+          username: s.username,
+          status: s.status,
+          items: [],
+          total: 0
+        };
+      }
+      map[rid].items.push(s);
+      map[rid].total += Number(s.total) || 0;
+      // если в чеке разные оплаты (не должно быть) — оставим первую
+      if (!map[rid].payment) map[rid].payment = s.payment;
+      if (!map[rid].date || (s.date && s.date > map[rid].date)) map[rid].date = s.date;
+    });
+    return Object.keys(map)
+      .map(function (k) { return map[k]; })
+      .sort(function (a, b) { return String(b.date || '').localeCompare(String(a.date || '')); });
+  }
+
+  window.openReceipt = function (receiptId) {
+    const all = getSales().filter(isSaleActive);
+    const receipts = groupSalesIntoReceipts(all);
+    const r = receipts.find(function (x) { return x.id === receiptId; });
+    if (!r) { toast('Чек не найден', 'err'); return; }
+
+    document.getElementById('receipt-title').textContent = 'Чек № ' + receiptId.slice(-6);
+    const shift = r.shiftId ? getShifts().find(function (s) { return s.id === r.shiftId; }) : null;
+    const customer = r.customerId ? getCustomers().find(function (c) { return c.id === r.customerId; }) : null;
+    document.getElementById('receipt-meta').innerHTML =
+      'Дата: <strong>' + fmtDate(r.date) + '</strong><br>' +
+      'Кассир: <strong>' + (r.userName || '—') + '</strong><br>' +
+      'Оплата: <strong>' + (PAY_LABELS[r.payment] || r.payment || '—') + '</strong><br>' +
+      (shift ? ('Смена: <strong>' + shift.cashierName + '</strong> (открыта ' + fmtDate(shift.openedAt) + ')<br>') : '') +
+      (customer ? ('Клиент: <strong>' + customer.name + '</strong> (' + customer.phone + ')') : 'Клиент: —');
+
+    const rows = r.items.map(function (it) {
+      const code = it.productCode || '—';
+      return [
+        '<span class="code-tag">' + code + '</span>',
+        it.productName,
+        it.quantity,
+        fmt(it.unitPrice),
+        fmt(it.total)
+      ];
+    });
+    document.getElementById('receipt-items').innerHTML =
+      '<div class="table-wrap">' + tableHTML(['Код', 'Товар', 'Кол-во', 'Цена', 'Сумма'], rows) + '</div>';
+
+    document.getElementById('receipt-total').textContent = fmt(r.total);
+    openModal('modal-receipt');
+  };
+
+  // ─── СКИДОЧНЫЕ КАРТЫ / КЛИЕНТЫ ───
+  window.openCustomerModal = function (id) {
+    if (!isAdmin()) return;
+    document.getElementById('customer-edit-id').value = id || '';
+    document.getElementById('modal-customer-title').textContent = id ? 'Редактировать клиента' : 'Новый клиент';
+    if (id) {
+      const c = getCustomers().find(function (x) { return x.id === id; });
+      if (c) {
+        document.getElementById('customer-phone').value = c.phone || '';
+        document.getElementById('customer-name').value = c.name || '';
+      }
+    } else {
+      document.getElementById('customer-phone').value = '';
+      document.getElementById('customer-name').value = '';
+    }
+    openModal('modal-customer');
+  };
+
+  window.saveCustomer = function () {
+    if (!isAdmin()) return;
+    const editId = document.getElementById('customer-edit-id').value || '';
+    const phone = (document.getElementById('customer-phone').value || '').trim();
+    const name = (document.getElementById('customer-name').value || '').trim();
+    if (!phone) { toast('Введите телефон/ID', 'err'); return; }
+    if (!name) { toast('Введите имя', 'err'); return; }
+
+    let list = getCustomers();
+    const normalized = phone.replace(/\D/g, '');
+    const dup = list.find(function (c) {
+      return c.id !== editId && (c.phone || '').replace(/\D/g, '') === normalized;
+    });
+    if (dup) { toast('Клиент с таким телефоном уже есть', 'err'); return; }
+
+    if (editId) {
+      list = list.map(function (c) {
+        if (c.id !== editId) return c;
+        return Object.assign({}, c, { phone: phone, name: name });
+      });
+      toast('Клиент обновлён', 'ok');
+    } else {
+      list.push({ id: uid(), phone: phone, name: name, spent: 0, bonusBalance: 0 });
+      toast('Клиент создан', 'ok');
+    }
+    setCustomers(list);
+    closeModal('modal-customer');
+    renderCustomers();
+  };
+
+  window.openCustomerHistory = function (customerId) {
+    const c = getCustomers().find(function (x) { return x.id === customerId; });
+    if (!c) { toast('Клиент не найден', 'err'); return; }
+    // история = чеки этого клиента
+    const sales = getSales().filter(function (s) { return isSaleActive(s) && s.customerId === customerId; });
+    const receipts = groupSalesIntoReceipts(sales);
+    if (!receipts.length) {
+      toast('У клиента нет покупок', 'warn');
+      return;
+    }
+    // откроем последний чек, а в заголовке покажем, чей это клиент
+    openReceipt(receipts[0].id);
+    document.getElementById('receipt-title').textContent =
+      'Покупки клиента: ' + c.name + ' (' + c.phone + ')';
+  };
+
+  window.renderCustomers = function () {
+    if (!document.getElementById('page-cards')) return;
+    const term = (document.getElementById('customer-search').value || '').toLowerCase();
+    const tierFilter = (document.getElementById('customer-tier').value || '').trim();
+    let list = getCustomers().slice();
+
+    if (term) {
+      list = list.filter(function (c) {
+        return (c.name || '').toLowerCase().includes(term) ||
+          (c.phone || '').toLowerCase().includes(term);
+      });
+    }
+    if (tierFilter) {
+      list = list.filter(function (c) { return getCustomerTier(Number(c.spent) || 0).name === tierFilter; });
+    }
+
+    list.sort(function (a, b) { return (a.name || '').localeCompare((b.name || ''), 'ru', { sensitivity: 'base' }); });
+
+    const rows = list.map(function (c) {
+      const tier = getCustomerTier(Number(c.spent) || 0);
+      return [
+        c.name,
+        c.phone,
+        '<span class="badge badge-info">' + tier.name + '</span>',
+        fmt(Number(c.spent) || 0),
+        fmt(Number(c.bonusBalance) || 0),
+        '<div class="actions">' +
+          '<button class="btn btn-sm btn-secondary" onclick="openCustomerHistory(\'' + c.id + '\\\')">История</button> ' +
+          '<button class="btn btn-sm btn-secondary" onclick="openCustomerModal(\'' + c.id + '\\\')">✏️</button>' +
+        '</div>'
+      ];
+    });
+    document.getElementById('customers-table').innerHTML = rows.length
+      ? tableHTML(['Имя', 'Телефон', 'Уровень', 'Покупок (₸)', 'Бонусы (₸)', ''], rows)
+      : '<div class="empty">Клиенты не найдены</div>';
+  };
+
+  window.exportCustomersToExcel = function () {
+    if (!isAdmin()) { toast('Только админ', 'err'); return; }
+    function esc(v) {
+      return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    const storeName = getCurrentStoreName ? getCurrentStoreName() : 'Магазин';
+    const customers = getCustomers().slice();
+    const sales = getSales().filter(isSaleActive);
+
+    // последняя покупка
+    const lastByCustomer = {};
+    sales.forEach(function (s) {
+      if (!s.customerId) return;
+      if (!lastByCustomer[s.customerId] || (s.date && s.date > lastByCustomer[s.customerId])) {
+        lastByCustomer[s.customerId] = s.date;
+      }
+    });
+
+    let html = '<html><head><meta charset="UTF-8"></head><body>';
+    html += '<h2>Клиенты (скидочные карты) — ' + esc(storeName) + '</h2>';
+    html += '<table border="1" cellpadding="5" style="border-collapse:collapse;font-family:Arial">';
+    html += '<tr style="background:#4472C4;color:#fff"><th>Имя</th><th>Телефон</th><th>Уровень</th><th>Покупок (₸)</th><th>Бонусы (₸)</th><th>Последняя покупка</th></tr>';
+    customers.sort(function (a, b) { return (a.name || '').localeCompare((b.name || ''), 'ru', { sensitivity: 'base' }); });
+    customers.forEach(function (c) {
+      const tier = getCustomerTier(Number(c.spent) || 0);
+      html += '<tr>' +
+        '<td>' + esc(c.name) + '</td>' +
+        '<td>' + esc(c.phone) + '</td>' +
+        '<td>' + esc(tier.name) + '</td>' +
+        '<td>' + (Number(c.spent) || 0) + '</td>' +
+        '<td>' + (Number(c.bonusBalance) || 0) + '</td>' +
+        '<td>' + esc(lastByCustomer[c.id] ? fmtDate(lastByCustomer[c.id]) : '—') + '</td>' +
+      '</tr>';
+    });
+    if (!customers.length) html += '<tr><td colspan="6">Нет клиентов</td></tr>';
+    html += '</table></body></html>';
+
+    const safeStore = String(storeName || 'store').replace(/[\\\/:*?"<>|]/g, '').replace(/\s+/g, '_');
+    const fname = 'Клиенты_' + safeStore + '_' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '.xls';
+    downloadFile(fname, html, 'application/vnd.ms-excel');
+  };
+
+  function refreshAll() {
+    renderDashboard();
+    renderProducts();
+    fillSaleProducts();
+    renderSalesToday();
+    updateSaleShiftBanner();
+    if (isAdmin()) renderExpenses();
+    else if (document.getElementById('page-myshift').classList.contains('active')) renderMyShiftPage();
+  }
+
+  // ─── INIT ───
+  async function initApp() {
+    try {
+      if (window.__apScriptsReady) await window.__apScriptsReady;
+    } catch (e) {
+      alert('Ошибка загрузки скриптов. Проверьте папку js/ на GitHub.\n' + (e.message || e));
+      return;
+    }
+    if (!ensureApDb()) return;
+    migrateProducts();
+    migrateBarcodes();
+    migrateSalesRecords();
+    document.getElementById('auth-screen').style.display = 'flex';
+    await window.ApScreens.bootstrap();
+    setInterval(function () {
+      if (currentUser) syncWithSupabase();
+    }, 30000);
+  }
+  initApp();
+})();
+</script>
+
+
+</body></html>
