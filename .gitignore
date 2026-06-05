@@ -1,0 +1,4 @@
+# config.js нужен на GitHub Pages — в нём только Publishable key (это нормально для клиента)
+# Не коммитьте Secret / service_role ключи
+node_modules/
+*.log
